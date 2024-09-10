@@ -6,20 +6,12 @@ x, y = np.meshgrid(np.arange(128), np.arange(128)) # make a canvas with coordina
 x, y = x.flatten(), y.flatten()
 points = np.vstack((x,y)).T
 
-verts1 = get_polygon_vertices(4, 20, (64,96))
+verts1 = get_polygon_vertices(5, 20, (64,96))
 polygon = Polygon(verts1, 'red')
 
-print(polygon.vertices)
-
-polygon = polygon.rotate(45, (64,96))
-
-print(polygon.vertices)
+polygon.rotate(45, (64,96))
 
 mask = polygon.contains_points(points)
-
-
-
-
 
 # draw to console
 row = ""

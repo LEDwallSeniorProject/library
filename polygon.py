@@ -48,8 +48,11 @@ class Polygon:
         
         rotated_vertices.append((x_final, y_final))
     
-    self.vertices = rotated_vertices
-    return self
+    self.change_vertices(rotated_vertices)
+
+  def change_vertices(self, vertices):
+    self.vertices = vertices
+    self.path = Path(vertices)
 
 
 def get_polygon_vertices(sides, radius=1, center=(0, 0)):
