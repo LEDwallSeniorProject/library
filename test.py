@@ -1,25 +1,10 @@
-from polygon import Polygon, get_polygon_vertices
-import numpy as np
+from matrix_library import shapes as s, canvas as c
 
+canvas = c.Canvas()
+polygon = s.Polygon(s.get_polygon_vertices(5, 20, (64,96)), (255, 0, 0))
+polygon.rotate(45, (64, 96))
+circle = s.Circle(10, (64,64), (0, 255, 0))
 
-x, y = np.meshgrid(np.arange(128), np.arange(128)) # make a canvas with coordinates
-x, y = x.flatten(), y.flatten()
-points = np.vstack((x,y)).T
-
-verts1 = get_polygon_vertices(5, 20, (64,96))
-polygon = Polygon(verts1, 'red')
-
-polygon.rotate(45, (64,96))
-
-mask = polygon.contains_points(points)
-
-# draw to console
-row = ""
-for i in mask:
-  if i:
-    row += "X"
-  else:
-    row += "_"
-  if len(row) == 128:
-    print(row)
-    row = ""
+canvas.add(polygon)
+canvas.add(circle)
+canvas.draw()

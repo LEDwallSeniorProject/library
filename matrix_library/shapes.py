@@ -4,6 +4,16 @@ import math
 
 class Polygon:
   def __init__(self, vertices, color=(255, 255, 255)):
+    """
+    Initializes a Polygon object with the given vertices and color.
+    Parameters:
+    - vertices (list): A list of vertices that define the polygon. Must have at least 3 vertices.
+    - color (tuple, optional): The color of the polygon. Defaults to (255, 255, 255).
+    Raises:
+    - ValueError: If the number of vertices is less than 3.
+    Returns:
+    - None
+    """
     if len(vertices) < 3:
       raise ValueError("A polygon must have at least 3 vertices")
     
@@ -12,7 +22,37 @@ class Polygon:
     self.color = color
 
   def contains_points(self, points):
+    """
+    Check if the shape contains the given points.
+
+    Parameters:
+    - points (array-like): An array-like object containing the points to check.
+
+    Returns:
+    - bool: True if the shape contains all the points, False otherwise.
+    """
     return self.path.contains_points(points)
+
+  def translate(self, dx, dy):
+    """
+    Translate the shape by a specified distance along the x and y axes.
+
+    Parameters:
+    - vertices: List of tuples representing the vertices of the shape.
+    - dx: The distance to translate the shape along the x axis.
+    - dy: The distance to translate the shape along the y axis.
+
+    Returns:
+    - A list of tuples representing the translated vertices of the shape.
+    """
+    translated_vertices = []
+    
+    for (x, y) in self.vertices:
+        x_translated = x + dx
+        y_translated = y + dy
+        translated_vertices.append((x_translated, y_translated))
+    
+    self.change_vertices(translated_vertices)
   
   def rotate(self, angle_degrees, center=(0, 0)):
     """
@@ -54,7 +94,6 @@ class Polygon:
     self.vertices = vertices
     self.path = Path(vertices)
 
-
 def get_polygon_vertices(sides, radius=1, center=(0, 0)):
     """
     Calculate the vertices of a regular polygon.
@@ -80,3 +119,29 @@ def get_polygon_vertices(sides, radius=1, center=(0, 0)):
         vertices.append((x, y))
     
     return vertices
+
+class Circle(Polygon):
+  def __init__(self, radius, center, color=(255, 255, 255)):
+    """
+    Initializes a Shape object with the given radius, center, and color.
+
+    Parameters:
+    - radius (float): The radius of the shape.
+    - center (tuple): The center coordinates of the shape.
+    - color (tuple, optional): The RGB color values of the shape. Defaults to (255, 255, 255).
+    """
+    vertices = get_polygon_vertices(radius * 10, radius, center)
+    super().__init__(vertices, color)
+    self.radius = radius
+    self.center = center
+  
+  def translate(self, dx, dy):
+    """
+    Translates the shape by the given amount in the x and y directions.
+
+    Args:
+      dx (float): The amount to translate in the x direction.
+      dy (float): The amount to translate in the y direction.
+    """
+    super().translate(dx, dy)
+    self.center = (self.center[0] + dx, self.center[1] + dy)
