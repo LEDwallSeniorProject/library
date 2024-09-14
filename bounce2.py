@@ -16,12 +16,12 @@ class Particle(s.Circle):
     self.velocity_x = velocity_x
     self.velocity_y = velocity_y
   
-  def hits(self, other):
+  def hits(self, other: 'Particle'):
     if self == other:
       return False
     return self.radius + other.radius >= distance(self.center[0], self.center[1], other.center[0], other.center[1])
   
-  def bounce(self, other):
+  def bounce(self, other: 'Particle'):
     if not self.hits(other):
       return
     
@@ -49,10 +49,6 @@ class Particle(s.Circle):
     dist_y_norm = dy / dist
     intrusion_dist = (self.radius + other.radius - dist) / 2 + 1e-6
 
-    # self.x += intrusion_dist * dist_x_norm
-    # self.y += intrusion_dist * dist_y_norm
-    # other.x -= intrusion_dist * dist_x_norm
-    # other.y -= intrusion_dist * dist_y_norm
     self.translate(intrusion_dist * dist_x_norm, intrusion_dist * dist_y_norm)
     other.translate(-intrusion_dist * dist_x_norm, -intrusion_dist * dist_y_norm) 
 
@@ -63,13 +59,16 @@ particle = Particle(10, (96, 96), (0, 0, 255), -3, 2)
 particles.append(particle)
 particle = Particle(12, (64, 96), (255, 0, 0), 2, -3)
 particles.append(particle)
+particle = Particle(4, (64, 75), (255, 255, 0), -2, -3)
+particles.append(particle)
 
 
 while True:
 
+  # Calculate the new position of the particles
   for particle in particles:
     particle.translate(particle.velocity_x, particle.velocity_y)
-    if particle.center[1] + particle.radius >= 128 or particle.center[1] - particle.radius <= 64:
+    if particle.center[1] + particle.radius >= 128 or particle.center[1] - particle.radius <= 0:
       particle.velocity_y *= -1
     if particle.center[0] + particle.radius >= 128 or particle.center[0] - particle.radius <= 0:
       particle.velocity_x *= -1
@@ -79,12 +78,11 @@ while True:
       if i != j:
         particles[i].bounce(particles[j])
 
-  
 
+  # Draw the particles
   canvas.clear()
-  
   for particle in particles:
     canvas.add(particle)
-  
   canvas.draw()
+
   time.sleep(0)

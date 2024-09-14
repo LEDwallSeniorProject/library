@@ -11,7 +11,7 @@ while True:
 
   circle.translate(velocity_x, velocity_y)
 
-  if circle.center[1] + circle.radius >= 128 or circle.center[1] - circle.radius <= 64:
+  if circle.center[1] + circle.radius >= 128 or circle.center[1] - circle.radius <= 0:
     velocity_y *= -1
   if circle.center[0] + circle.radius >= 128 or circle.center[0] - circle.radius <= 0:
     velocity_x *= -1

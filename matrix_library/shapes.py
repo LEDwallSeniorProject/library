@@ -20,6 +20,7 @@ class Polygon:
     self.vertices = vertices
     self.path = Path(vertices)
     self.color = color
+    self.center = self.get_center()
 
   def contains_points(self, points):
     """
@@ -53,6 +54,7 @@ class Polygon:
         translated_vertices.append((x_translated, y_translated))
     
     self.change_vertices(translated_vertices)
+    self.center = (self.center[0] + dx, self.center[1] + dy)
   
   def rotate(self, angle_degrees, center=(0, 0)):
     """
@@ -93,6 +95,34 @@ class Polygon:
   def change_vertices(self, vertices):
     self.vertices = vertices
     self.path = Path(vertices)
+  
+  def get_center(self):
+    n = len(self.vertices)
+    if n < 3:
+        raise ValueError("A polygon must have at least 3 vertices.")
+
+    # Initialize variables
+    cx, cy = 0.0, 0.0
+    area = 0.0
+
+    # Calculate the signed area of the polygon
+    for i in range(n):
+        x1, y1 = self.vertices[i]
+        x2, y2 = self.vertices[(i + 1) % n]
+        a = x1 * y2 - x2 * y1
+        area += a
+        cx += (x1 + x2) * a
+        cy += (y1 + y2) * a
+
+    area *= 0.5
+    if area == 0:
+        raise ValueError("Area of the polygon is zero.")
+    
+    cx /= (6 * area)
+    cy /= (6 * area)
+
+    return (cx, cy)
+
 
 def get_polygon_vertices(sides, radius=1, center=(0, 0)):
     """
@@ -134,14 +164,3 @@ class Circle(Polygon):
     super().__init__(vertices, color)
     self.radius = radius
     self.center = center
-  
-  def translate(self, dx, dy):
-    """
-    Translates the shape by the given amount in the x and y directions.
-
-    Args:
-      dx (float): The amount to translate in the x direction.
-      dy (float): The amount to translate in the y direction.
-    """
-    super().translate(dx, dy)
-    self.center = (self.center[0] + dx, self.center[1] + dy)

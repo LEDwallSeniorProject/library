@@ -1,9 +1,9 @@
 import numpy as np
-import matrix_library
 from matrix_library import shapes as s
+import pygame
 
 class Canvas:
-  def __init__(self, color=(0, 0, 0)):
+  def __init__(self, color=(0, 0, 0), debug=True):
     """
     Initializes a Canvas object with the specified color.
 
@@ -21,6 +21,13 @@ class Canvas:
     self.color = color
     self.canvas = np.full((128, 128, 3), self.color)
     self.points = self.get_points()
+    self.debug = debug
+
+    if self.debug:
+      pygame.init()
+      self.screen = pygame.display.set_mode((640, 640))
+      pygame.display.set_caption("Canvas")
+      self.clock = pygame.time.Clock()
   
   def clear(self):
     """
@@ -75,13 +82,28 @@ class Canvas:
 
   def draw(self):
     # TODO: Detect if we are connected to the LED matrix
-    row = ""
-    for i in range(len(self.canvas)):
-      for j in range(len(self.canvas[i])):
-        if self.canvas[i][j][0] == 0 and self.canvas[i][j][1] == 0 and self.canvas[i][j][2] == 0:
-          row += "-"
-        else:
-          row += "X"
-        # row += f"{self.canvas[i][j][0]} {self.canvas[i][j][1]} {self.canvas[i][j][2]} "
-      row += "\n"
-    print(row)
+    if self.debug:
+
+      for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            quit()
+
+      self.screen.fill(self.color)
+
+      for i in range(len(self.canvas)):
+        for j in range(len(self.canvas[i])):
+          pygame.draw.rect(self.screen, self.canvas[i][j], (j * 5, i * 5, 5, 5))
+    
+      pygame.display.flip()
+
+
+    else:
+      row = ""
+      for i in range(len(self.canvas)):
+        for j in range(len(self.canvas[i])):
+          if self.canvas[i][j][0] == 0 and self.canvas[i][j][1] == 0 and self.canvas[i][j][2] == 0:
+            row += "-"
+          else:
+            row += "X"
+        row += "\n"
+      print(row)
