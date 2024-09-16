@@ -23,15 +23,6 @@ class Polygon:
     self.center = self.get_center()
 
   def contains_points(self, points):
-    """
-    Check if the shape contains the given points.
-
-    Parameters:
-    - points (array-like): An array-like object containing the points to check.
-
-    Returns:
-    - bool: True if the shape contains all the points, False otherwise.
-    """
     return self.path.contains_points(points)
 
   def translate(self, dx, dy):
@@ -123,7 +114,6 @@ class Polygon:
 
     return (cx, cy)
 
-
 def get_polygon_vertices(sides, radius=1, center=(0, 0)):
     """
     Calculate the vertices of a regular polygon.
@@ -163,4 +153,122 @@ class Circle(Polygon):
     vertices = get_polygon_vertices(radius * 10, radius, center)
     super().__init__(vertices, color)
     self.radius = radius
-    self.center = center
+    # self.center = center
+
+class Line(Polygon):
+  def __init__(self, start, end, color=(255, 255, 255), thickness=0.5):
+    self.start = start
+    self.end = end
+    
+    verts1 = [self.start[0] + thickness, self.start[1] + thickness]
+    verts2 = [self.start[0] + thickness, self.start[1] - thickness]
+    verts3 = [self.start[0] - thickness, self.start[1] - thickness]
+    verts4 = [self.start[0] - thickness, self.start[1] + thickness]
+    verts5 = [self.end[0] - thickness, self.end[1] - thickness]
+    verts6 = [self.end[0] - thickness, self.end[1] + thickness] 
+    verts7 = [self.end[0] + thickness, self.end[1] + thickness]
+    verts8 = [self.end[0] + thickness, self.end[1] - thickness]
+    self.vertices = [verts1, verts2, verts3, verts4, verts5, verts6, verts7, verts8]
+
+
+    self.path = Path(self.vertices)
+    self.color = color
+
+# TODO: Implement PolygonOutline class features
+class PolygonOutline(Polygon):
+  def __init__(self, vertices, color=(255, 255, 255), thickness=1):
+    """
+    Initializes a PolygonOutline object with the given vertices, color, and thickness.
+
+    Parameters:
+    - vertices (list): A list of vertices that define the polygon.
+    - color (tuple, optional): The color of the polygon outline. Defaults to (255, 255, 255).
+    - thickness (float, optional): The thickness of the polygon outline. Defaults to 1.
+    """
+    self.vertices = vertices
+    self.color = color
+    self.thickness = thickness
+    self.center = self.get_center()
+    self.inner_vertices = get_polygon_vertices(len(self.vertices), self.distance(self.center[0], self.center[1], self.vertices[0][0], self.vertices[0][1]) - self.thickness, self.center)
+  
+  # def contains_points(self, points):
+  #   lines = []
+  #   for i in range(len(self.vertices)):
+  #     line = Line(self.vertices[i - 1], self.vertices[i])
+  #     lines.append(line)
+
+  #   mask = np.zeros(len(points), dtype=bool)
+  #   for line in lines:
+  #     mask |= line.contains_points(points)
+  #   return mask
+
+  def change_inner_vertices(self, inner_vertices):
+    self.inner_vertices = inner_vertices
+    self.path = Path(self.inner_vertices)
+  
+  def rotate_inner(self, angle_degrees, center=(0, 0)):
+    # Convert angle from degrees to radians
+    angle_radians = math.radians(angle_degrees)
+    cos_angle = math.cos(angle_radians)
+    sin_angle = math.sin(angle_radians)
+    
+    rotated_vertices = []
+    
+    for (x, y) in self.inner_vertices:
+        # Translate point to origin
+        x_translated = x - center[0]
+        y_translated = y - center[1]
+        
+        # Apply rotation
+        x_rotated = x_translated * cos_angle - y_translated * sin_angle
+        y_rotated = x_translated * sin_angle + y_translated * cos_angle
+        
+        # Translate point back
+        x_final = x_rotated + center[0]
+        y_final = y_rotated + center[1]
+        
+        rotated_vertices.append((x_final, y_final))
+    
+    self.change_inner_vertices(rotated_vertices)
+
+  def rotate(self, angle_degrees, center=(0, 0)):
+    super().rotate(angle_degrees, center)
+    self.rotate_inner(angle_degrees, center)
+  
+  def distance(self, x1, y1, x2, y2): 
+    return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
+
+  def contains_points(self, points):
+    mask = np.zeros(len(points), dtype=bool)
+
+    poly1_mask = Polygon(self.vertices, self.color).contains_points(points)
+    poly2_mask = Polygon(self.inner_vertices, self.color).contains_points(points)
+
+    mask = np.logical_and(poly1_mask, np.logical_not(poly2_mask))
+    return mask
+  
+
+class CircleOutline(PolygonOutline):
+  def __init__(self, radius, center, color=(255, 255, 255), thickness=1):
+    """
+    Initializes a CircleOutline object with the given radius, center, color, and thickness.
+
+    Parameters:
+    - radius (float): The radius of the circle outline.
+    - center (tuple): The center coordinates of the circle outline.
+    - color (tuple, optional): The RGB color values of the circle outline. Defaults to (255, 255, 255).
+    - thickness (float, optional): The thickness of the circle outline. Defaults to 1.
+    """
+    vertices = get_polygon_vertices(radius * 10, radius, center)
+    super().__init__(vertices, color, thickness)
+    self.radius = radius
+  
+  def contains_points(self, points):
+    mask = np.zeros(len(points), dtype=bool)
+    
+    circle1_mask = Circle(self.radius, self.center, self.color).contains_points(points)
+    circle2_mask = Circle(self.radius - self.thickness, self.center, self.color).contains_points(points)
+
+    mask = np.logical_and(circle1_mask, np.logical_not(circle2_mask))
+    return mask
+      
