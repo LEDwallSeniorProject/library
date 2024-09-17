@@ -59,7 +59,7 @@ particle = Particle(10, (96, 96), (0, 0, 255), -3, 2)
 particles.append(particle)
 particle = Particle(12, (64, 96), (255, 0, 0), 2, -3)
 particles.append(particle)
-particle = Particle(4, (64, 75), (255, 255, 0), -2, -3)
+particle = Particle(6, (64, 75), (255, 255, 0), -2, -3)
 particles.append(particle)
 
 
@@ -67,11 +67,14 @@ while True:
 
   # Calculate the new position of the particles
   for particle in particles:
-    particle.translate(particle.velocity_x, particle.velocity_y)
     if particle.center[1] + particle.radius >= 128 or particle.center[1] - particle.radius <= 0:
       particle.velocity_y *= -1
+
     if particle.center[0] + particle.radius >= 128 or particle.center[0] - particle.radius <= 0:
       particle.velocity_x *= -1
+    
+    particle.translate(particle.velocity_x, particle.velocity_y)
+
 
   for i in range(len(particles)):
     for j in range(i):

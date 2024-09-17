@@ -1,6 +1,7 @@
 import numpy as np
 from matrix_library import shapes as s
 import pygame
+import time
 
 class Canvas:
   def __init__(self, color=(0, 0, 0), debug=True):
@@ -22,6 +23,7 @@ class Canvas:
     self.canvas = np.full((128, 128, 3), self.color)
     self.points = self.get_points()
     self.debug = debug
+    self.prev_frame_time = time.perf_counter()
 
     if self.debug:
       pygame.init()
@@ -81,9 +83,17 @@ class Canvas:
           self.canvas[i][j] = polygon.color
 
   def draw(self):
+    
+    # Limit the frame rate to a specified value
+    FPS = 30
+    passed_time = time.perf_counter() - self.prev_frame_time
+    if passed_time < 1/FPS:
+      time.sleep(1/FPS - passed_time)
+      
     # TODO: Detect if we are connected to the LED matrix
     if self.debug:
 
+      # Check for the close event
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
             quit()
@@ -107,3 +117,5 @@ class Canvas:
             row += "X"
         row += "\n"
       print(row)
+    
+    self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
