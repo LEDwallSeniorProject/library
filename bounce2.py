@@ -52,7 +52,6 @@ class Particle(s.Circle):
     self.translate(intrusion_dist * dist_x_norm, intrusion_dist * dist_y_norm)
     other.translate(-intrusion_dist * dist_x_norm, -intrusion_dist * dist_y_norm) 
 
-
 particle = Particle(8, (32, 96), (0, 255, 0), 3, 2)
 particles.append(particle)
 particle = Particle(10, (96, 96), (0, 0, 255), -3, 2)
@@ -61,7 +60,6 @@ particle = Particle(12, (64, 96), (255, 0, 0), 2, -3)
 particles.append(particle)
 particle = Particle(6, (64, 75), (255, 255, 0), -2, -3)
 particles.append(particle)
-
 
 while True:
 
@@ -75,17 +73,13 @@ while True:
     
     particle.translate(particle.velocity_x, particle.velocity_y)
 
-
   for i in range(len(particles)):
     for j in range(i):
       if i != j:
         particles[i].bounce(particles[j])
-
 
   # Draw the particles
   canvas.clear()
   for particle in particles:
     canvas.add(particle)
   canvas.draw()
-
-  time.sleep(0)

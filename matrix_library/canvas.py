@@ -81,6 +81,22 @@ class Canvas:
       for j in range(len(self.canvas[i])):
         if mask[i * 128 + j]:
           self.canvas[i][j] = polygon.color
+    
+  def add(self, letter: s.Letter):
+    """
+    Adds a letter to the canvas.
+
+    Parameters:
+      letter (s.Letter): The letter to be added.
+
+    Returns:
+      None
+    """
+    mask = letter.contains_points(self.points)
+    for i in range(len(self.canvas)):
+      for j in range(len(self.canvas[i])):
+        if mask[i * 128 + j]:
+          self.canvas[i][j] = letter.color
 
   def draw(self):
     
@@ -105,7 +121,6 @@ class Canvas:
           pygame.draw.rect(self.screen, self.canvas[i][j], (j * 5, i * 5, 5, 5))
     
       pygame.display.flip()
-
 
     else:
       row = ""
