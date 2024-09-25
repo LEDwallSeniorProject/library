@@ -78,17 +78,12 @@ class Canvas:
     """
         
     if isinstance(item, s.ColoredBitMap):
-      # print(f"Pixels: {len(item.pixels)}")  
       for pixel in item.pixels:
         mask = pixel.contains_points(self.points)
         color = pixel.color
         for i in range(len(self.canvas)):
           for j in range(len(self.canvas[i])):
             if mask[i * 128 + j]:
-              print(f"Mask: {mask[i * 128 + j]}")
-              print(f"Canvas: {self.canvas[i][j]}")
-              print(f"Color: {color}")
-              print(f"i: {i}, j: {j}")
               self.canvas[i][j] = color
       return  # Early return after processing all bitmaps
 
