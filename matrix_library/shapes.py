@@ -269,13 +269,17 @@ class Phrase:
     self.size: int = size
     self.letters = self.get_letters()
   
+  def set_text(self, text: str):
+    self.text = text
+    self.letters = self.get_letters()
+  
   def set_position(self, position: list):
     self.position = position
     self.letters = self.get_letters()
   
   def get_width(self):
     return sum([letter.get_width() for letter in self.letters])
-  
+
   def translate(self, dx: float, dy: float):
     for letter in self.letters:
       letter.translate(dx, dy)
@@ -298,27 +302,63 @@ class Phrase:
     for letter in self.letters:
       mask |= letter.contains_points(points)
     return mask
-class Letter:
-  def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
-    self.char = char
+
+class Pixel:
+  def __init__(self, position: list, color: list=[255, 255, 255], scale: int=1):
     self.position = position
     self.color = color
-    self.size = size
-
+    self.scale = scale
+  
   def contains_points(self, points: np.ndarray):
     mask = np.zeros(len(points), dtype=bool)
-    char_mask = self.get_char_mask()
-    
-    scale = self.size  # Use self.size to determine the scale
+    x, y = self.position
+    for i in range(self.scale):
+      for j in range(self.scale):
+        mask |= np.logical_and(
+            np.logical_and(points[:, 0] >= x + i, points[:, 0] < x + i + 1),
+            np.logical_and(points[:, 1] >= y + j, points[:, 1] < y + j + 1)
+        )
+    return mask
+  
+  def translate(self, dx: float, dy: float):
+    self.position[0] += dx
+    self.position[1] += dy
 
-    for i in range(len(char_mask)):
-        x = (i % 8) * scale  # Scale x coordinate
-        y = (i // 8) * scale  # Scale y coordinate
-        if char_mask[i] == 'X':
-            # Check if points are within the scale x scale area represented by each 'X'
+class ColoredBitMap:
+  def __init__(self, pixels: list, width: int, height: int, position: list=[0, 0], scale: int=1):
+    self.pixels = pixels
+    self.position = position
+    self.width = width
+    self.height = height
+    self.scale = scale
+    self.pixels = []
+    
+    for i in range(len(pixels)):
+      if pixels[i] != [] and pixels[i] != [None]: # Skip empty pixels
+        x = (i % width) * scale
+        y = (i // width) * scale
+        
+        self.pixels.append(Pixel([x, y], pixels[i]))
+
+class BitMap:
+  def __init__(self, pixels: list, width: int, height: int, position: list=[0, 0], color: list = (255, 255, 255), scale: int=1):
+    self.pixels = pixels
+    self.position = position
+    self.width = width
+    self.height = height
+    self.scale = scale
+    self.color = color
+  
+  def contains_points(self, points: np.ndarray):
+    mask = np.zeros(len(points), dtype=bool)
+    
+    for i in range(len(self.pixels)):
+        x = (i % self.width) * self.scale
+        y = (i // self.width) * self.scale
+        if self.pixels[i] == 1:
             mask |= np.logical_and(
-                np.logical_and(points[:, 0] >= x + self.position[0], points[:, 0] < x + self.position[0] + scale),
-                np.logical_and(points[:, 1] >= y + self.position[1], points[:, 1] < y + self.position[1] + scale)
+                np.logical_and(points[:, 0] >= x + self.position[0], points[:, 0] < x + self.position[0] + self.scale),
+                np.logical_and(points[:, 1] >= y + self.position[1], points[:, 1] < y + self.position[1] + self.scale)
             )
     
     return mask
@@ -327,8 +367,22 @@ class Letter:
     self.position[0] += dx
     self.position[1] += dy
   
+class Letter(BitMap):
+  def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
+    self.char = char
+    
+    # Make the char_mask a bitmap
+    char_mask = self.get_char_mask()
+    for i, value in enumerate(char_mask):
+      if value == 'X':
+        char_mask[i] = 1
+      else:
+        char_mask[i] = 0
+    
+    super().__init__(char_mask, 8, 8, position, color, size)
+  
   def get_width(self):
-    return 8 * self.size
+    return 8 * self.scale
   
   def get_char_mask(self):
     mask_lookup = { # 8x8 mask for each letter
@@ -1061,6 +1115,99 @@ class Letter:
         " "," ","X","X"," ","X"," ","X",
         " ","X","X"," "," "," ","X"," ",
         " "," "," "," "," "," "," "," ",
+      ],
+      '.': [
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," "," "," "," "," "," ",
+      ],
+      ',': [
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," ","X","X"," "," "," "," ",
+      ],
+      ':': [
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," "," "," "," "," "," ",
+      ],
+      ';': [
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," ","X","X"," "," "," "," ",
+      ],
+      '(': [
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," "," "," "," "," "," ",
+      ],
+      ')': [
+        " "," "," "," "," "," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+      ],
+      '\'': [
+        " "," "," ","X","X"," "," "," ",
+        " "," "," ","X","X"," "," "," ",
+        " "," "," "," ","X"," "," "," ",
+        " "," "," ","X"," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+      ],
+      '\"': [
+        " "," ","X","X"," ","X","X"," ",
+        " "," ","X","X"," ","X","X"," ",
+        " "," "," ","X"," "," ","X"," ",
+        " "," ","X"," "," ","X"," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
+        " "," "," "," "," "," "," "," ",
       ]
     }
-    return mask_lookup[self.char]
+    
+    if self.char in mask_lookup:
+      return mask_lookup[self.char]
+    else:
+      return [ # Return an checkered pattern if the character is not found
+        " ","X"," ","X"," ","X"," ","X",
+        "X"," ","X"," ","X"," ","X"," ",
+        " ","X"," ","X"," ","X"," ","X",
+        "X"," ","X"," ","X"," ","X"," ",
+        " ","X"," ","X"," ","X"," ","X",
+        "X"," ","X"," ","X"," ","X"," ",
+        " ","X"," ","X"," ","X"," ","X",
+        "X"," ","X"," ","X"," ","X"," ",
+      ]

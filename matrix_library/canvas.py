@@ -66,37 +66,41 @@ class Canvas:
     x, y = x.flatten(), y.flatten()
     return np.vstack((x, y)).T
   
-  def add(self, polygon: s.Polygon):
+  def add(self, item):
     """
-    Adds a polygon to the canvas.
+    Adds a letter or bitmap to the canvas.
 
     Parameters:
-      polygon (s.Polygon): The polygon to be added.
+      item: The item to be added.
 
     Returns:
       None
     """
-    mask = polygon.contains_points(self.points)
-    for i in range(len(self.canvas)):
-      for j in range(len(self.canvas[i])):
-        if mask[i * 128 + j]:
-          self.canvas[i][j] = polygon.color
+        
+    if isinstance(item, s.ColoredBitMap):
+      # print(f"Pixels: {len(item.pixels)}")  
+      for pixel in item.pixels:
+        mask = pixel.contains_points(self.points)
+        color = pixel.color
+        for i in range(len(self.canvas)):
+          for j in range(len(self.canvas[i])):
+            if mask[i * 128 + j]:
+              print(f"Mask: {mask[i * 128 + j]}")
+              print(f"Canvas: {self.canvas[i][j]}")
+              print(f"Color: {color}")
+              print(f"i: {i}, j: {j}")
+              self.canvas[i][j] = color
+      return  # Early return after processing all bitmaps
+
+    mask = item.contains_points(self.points)
+    color = item.color
     
-  def add(self, letter: s.Letter):
-    """
-    Adds a letter to the canvas.
-
-    Parameters:
-      letter (s.Letter): The letter to be added.
-
-    Returns:
-      None
-    """
-    mask = letter.contains_points(self.points)
+    # Process the letter after checking it
     for i in range(len(self.canvas)):
       for j in range(len(self.canvas[i])):
-        if mask[i * 128 + j]:
-          self.canvas[i][j] = letter.color
+          if mask[i * 128 + j]:
+              self.canvas[i][j] = color
+
 
   def draw(self):
     
