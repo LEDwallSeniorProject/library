@@ -155,23 +155,53 @@ class Circle(Polygon):
     # self.center = center
 
 class Line(Polygon):
-  def __init__(self, start: tuple, end: tuple, color: tuple=(255, 255, 255), thickness: float=0.5):
+  def __init__(self, start: list, end: list, color: list=(255, 255, 255), thickness: float=0.5):
+    if start == end:
+      raise ValueError("The start and end points of a line cannot be the same.")
+    elif thickness <= 0:
+      raise ValueError("The thickness of a line must be greater than 0.")
+    elif len(start) != 2 or len(end) != 2:
+      raise ValueError("The start and end points must be list of length 2.")
+    elif len(color) != 3:
+      raise ValueError("The color must be a list of length 3.")
+    
     self.start = start
     self.end = end
+    self.thickness = thickness
+    self.length = math.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
     
-    verts1 = [self.start[0] + thickness, self.start[1] + thickness]
-    verts2 = [self.start[0] + thickness, self.start[1] - thickness]
-    verts3 = [self.start[0] - thickness, self.start[1] - thickness]
-    verts4 = [self.start[0] - thickness, self.start[1] + thickness]
-    verts5 = [self.end[0] - thickness, self.end[1] - thickness]
-    verts6 = [self.end[0] - thickness, self.end[1] + thickness] 
-    verts7 = [self.end[0] + thickness, self.end[1] + thickness]
-    verts8 = [self.end[0] + thickness, self.end[1] - thickness]
+    # Calculate the angle of the line
+    self.angle = self.calculate_angle()
+    self.end = [self.start[0], self.start[1] + self.length]
+    
+    verts1 = [self.start[0] + self.thickness, self.start[1] + self.thickness]
+    verts2 = [self.start[0] + self.thickness, self.start[1] - self.thickness]
+    verts3 = [self.start[0] - self.thickness, self.start[1] - self.thickness]
+    verts4 = [self.start[0] - self.thickness, self.start[1] + self.thickness]
+    verts5 = [self.end[0] - self.thickness, self.end[1] - self.thickness]
+    verts6 = [self.end[0] - self.thickness, self.end[1] + self.thickness] 
+    verts7 = [self.end[0] + self.thickness, self.end[1] + self.thickness]
+    verts8 = [self.end[0] + self.thickness, self.end[1] - self.thickness]
     self.vertices = [verts1, verts2, verts3, verts4, verts5, verts6, verts7, verts8]
 
+    self.rotate(-self.angle, self.start)
 
     self.path = Path(self.vertices)
     self.color = color
+  
+  def calculate_angle(self):
+    line1 = (self.end[0] - self.start[0], self.end[1] - self.start[1])
+    line2 = (0, 1)
+    
+    dot_product = line1[0] * line2[0] + line1[1] * line2[1]
+    magnitude_line1 = math.sqrt(line1[0] ** 2 + line1[1] ** 2)
+    magnitude_line2 = math.sqrt(line2[0] ** 2 + line2[1] ** 2)
+    
+    cos_angle = dot_product / (magnitude_line1 * magnitude_line2)
+    angle_rads = math.acos(cos_angle)
+    angle_deg = math.degrees(angle_rads)
+    
+    return angle_deg
 
 # TODO: Implement PolygonOutline class features
 class PolygonOutline(Polygon):

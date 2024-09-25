@@ -4,7 +4,7 @@ import time
 
 square = s.Polygon(s.get_polygon_vertices(4, 60, (0,100)), (100, 200, 100))
 
-headerline = s.Line((8, 28), (140, 28), (255, 0, 0), thickness= 2)
+headerline = s.Line((8, 28), (120, 28), (255, 0, 0), thickness=1)
 
 menuheader = s.Phrase("MENU", (0, 0), (255, 255, 255), size=3.5, auto_newline=True)
 demoheader = s.Phrase("Demos", (0, 30), (255, 255, 255), size=3, auto_newline=True)
