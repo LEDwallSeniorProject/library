@@ -1,8 +1,8 @@
-from matrix_library import canvas as c, shapes as s
+import matrix_library as m
 
-canvas = c.Canvas()
+canvas = m.Canvas()
 
-text = s.Phrase("WOW!", [64, 64], size=8)
+text = m.Phrase("WOW!", [64, 64], size=8)
 
 while True:
   canvas.clear()

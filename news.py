@@ -1,4 +1,4 @@
-from matrix_library import canvas as c, shapes as s
+import matrix_library as m
 from dotenv import load_dotenv
 import os
 import requests
@@ -12,13 +12,13 @@ def get_news():
   response = requests.get(f"http://api.mediastack.com/v1/news?access_key={access_key}&languages=en")
   return response.json()
 
-canvas = c.Canvas()
+canvas = m.Canvas()
 
 news = get_news()
 news_index = 0
-title = s.Phrase(news["data"][news_index]["title"], (0, 0), (255, 255, 255), size=2)
-desc = s.Phrase(news["data"][news_index]["description"], (0, 128), (255, 255, 255), size=1, auto_newline=True)
-background = s.Polygon(((0,0), (128, 0), (128, 16), (0, 16)), color=(0, 0, 0))
+title = m.Phrase(news["data"][news_index]["title"], (0, 0), (255, 255, 255), size=2)
+desc = m.Phrase(news["data"][news_index]["description"], (0, 128), (255, 255, 255), size=1, auto_newline=True)
+background = m.Polygon(((0,0), (128, 0), (128, 16), (0, 16)), color=(0, 0, 0))
 
 
 start_time = time.perf_counter()

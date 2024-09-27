@@ -1,16 +1,16 @@
-from matrix_library import shapes as s, canvas as c
+import matrix_library as m
 import time
 import random
 
-canvas = c.Canvas()
-circle = s.Circle(10, (64,96), (0, 255, 0))
+canvas = m.Canvas()
+circle = m.Circle(10, (64,96), (0, 255, 0))
 particles = []
 
 def distance(x1, y1, x2, y2):
     """ Compute the distance between two points. """
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
-class Particle(s.Circle):
+class Particle(m.Circle):
   def __init__(self, radius, center, color, velocity_x, velocity_y):
     super().__init__(radius, center, color)
     self.velocity_x = velocity_x

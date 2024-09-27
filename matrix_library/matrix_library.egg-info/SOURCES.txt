@@ -1,0 +1,5 @@
+setup.py
+matrix_library.egg-info/PKG-INFO
+matrix_library.egg-info/SOURCES.txt
+matrix_library.egg-info/dependency_links.txt
+matrix_library.egg-info/top_level.txt

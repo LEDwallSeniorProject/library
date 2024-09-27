@@ -1,8 +1,8 @@
-from matrix_library import shapes as s, canvas as c
+import matrix_library as m
 import time
 
-canvas = c.Canvas()
-circle = s.Circle(10, (64,96), (0, 255, 0))
+canvas = m.Canvas()
+circle = m.Circle(10, (64,96), (0, 255, 0))
 
 velocity_y = 2
 velocity_x = 3

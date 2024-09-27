@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: matrix_library
+Version: 0.1
+Summary: This is a matrix library made by Senior Computer Science students at Calvin University. It is designed so that students of entry level courses can design and implement their own projects on the LED matrix.
+Author: Alex Miller, Ellie Sand, and Palmer Ford
+Author-email: ajm94@calvin.edu, ens27@calvin.edu, pjf5@calvin.edu

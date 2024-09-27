@@ -1,4 +1,4 @@
-from matrix_library import canvas as c, shapes as s
+import matrix_library as m
 import random
 
 # Define dimensions
@@ -16,9 +16,9 @@ def set_pixel(index, color):
 for i in range(width * height):
   set_pixel(i, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
     
-canvas = c.Canvas()
+canvas = m.Canvas()
 
 while True:
     canvas.clear()
-    canvas.add(s.ColoredBitMap(bitmap, width, height, (0, 0), 1))
+    canvas.add(m.ColoredBitMap(bitmap, width, height, (0, 0), 1))
     canvas.draw()

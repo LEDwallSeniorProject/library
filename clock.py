@@ -1,22 +1,22 @@
-from matrix_library import shapes as s, canvas as c
+import matrix_library as m
 from datetime import datetime
 import time
 
-canvas = c.Canvas()
-circle = s.CircleOutline(64, (64, 64), (255, 255, 255))
+canvas = m.Canvas()
+circle = m.CircleOutline(64, (64, 64), (255, 255, 255))
 
 markers = []
 for i in range(12):
-  marker = s.Line((64, 16), (64, 8), (255, 255, 255))
+  marker = m.Line((64, 16), (64, 8), (255, 255, 255))
   marker.rotate(i * 30, (64, 64))
   markers.append(marker)
 
 while True:
     canvas.clear()
 
-    hour_hand = s.Line((64, 64), (64, 16), (255, 0, 0))
-    minute_hand = s.Line((64, 64), (64, 16), (0, 255, 0)) 
-    second_hand = s.Line((64, 64), (64, 16), (0, 0, 255)) 
+    hour_hand = m.Line((64, 64), (64, 16), (255, 0, 0))
+    minute_hand = m.Line((64, 64), (64, 16), (0, 255, 0)) 
+    second_hand = m.Line((64, 64), (64, 16), (0, 0, 255)) 
 
     now = datetime.now()
     hour = now.hour

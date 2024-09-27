@@ -1,19 +1,19 @@
-from matrix_library import shapes as s, canvas as c
-canvas = c.Canvas()
+import matrix_library as m
+canvas = m.Canvas()
 import time
 
-square = s.Polygon(s.get_polygon_vertices(4, 60, (0,100)), (100, 200, 100))
+square = m.Polygon(m.get_polygon_vertices(4, 60, (0,100)), (100, 200, 100))
 
-headerline = s.Line((8, 28), (120, 28), (255, 0, 0), thickness=1)
+headerline = m.Line((8, 28), (120, 28), (255, 0, 0), thickness=1)
 
-menuheader = s.Phrase("MENU", (0, 0), (255, 255, 255), size=3.5, auto_newline=True)
-demoheader = s.Phrase("Demos", (0, 30), (255, 255, 255), size=3, auto_newline=True)
-gamesheader = s.Phrase("Games", (0, 60), (255, 255, 255), size=3, auto_newline=True)
-creatornames = s.Phrase("created by Alex Ellie and Palmer", (0, 100), (255, 255, 255), size=1)
+menuheader = m.Phrase("MENU", (0, 0), (255, 255, 255), size=3.5, auto_newline=True)
+demoheader = m.Phrase("Demos", (0, 30), (255, 255, 255), size=3, auto_newline=True)
+gamesheader = m.Phrase("Games", (0, 60), (255, 255, 255), size=3, auto_newline=True)
+creatornames = m.Phrase("created by Alex Ellie and Palmer", (0, 100), (255, 255, 255), size=1)
 
-controller = s.Polygon(s.get_polygon_vertices(4, 30, (5,150)), (0, 0, 255))
-controller2 = s.Polygon(s.get_polygon_vertices(4, 30, (20,150)), (0, 0, 255))
-countdown = s.Phrase("30", (110, 120), (255, 255, 255), size=1, auto_newline=True)
+controller = m.Polygon(m.get_polygon_vertices(4, 30, (5,150)), (0, 0, 255))
+controller2 = m.Polygon(m.get_polygon_vertices(4, 30, (20,150)), (0, 0, 255))
+countdown = m.Phrase("30", (110, 120), (255, 255, 255), size=1, auto_newline=True)
 
 while True:
     canvas.clear()
