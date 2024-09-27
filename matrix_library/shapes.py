@@ -368,7 +368,37 @@ class ColoredBitMap:
         x = (i % width) * scale
         y = (i // width) * scale
         
-        self.pixels.append(Pixel([x, y], pixels[i]))
+        self.pixels.append(Pixel([x + self.position[0], y + self.position[1]], pixels[i]))
+  
+  def BMPReader(filename): # TODO: Test to make sure this works...
+    # Source: https://github.com/stuartm2/CircuitPython_BMP_Reader/blob/master/lib/bmp_reader.py
+    def lebytes_to_int(bytes):
+      n = 0x00
+      while len(bytes) > 0:
+        n <<= 8
+        n |= bytes.pop()
+      return int(n)
+    
+    with open(filename, "rb") as f:
+      img_bytes = list(bytearray(f.read()))
+    
+    start_pos = lebytes_to_int(img_bytes[10:14])
+    end_pos = start_pos + lebytes_to_int(img_bytes[34:38])
+    
+    width = lebytes_to_int[18:22]
+    height = lebytes_to_int[22:26]
+    
+    pixel_data = img_bytes[start_pos:end_pos]
+    
+    pixel_grid = []
+    
+    for x in range(width):
+      for y in range(height):
+        r = pixel_data[(x + y * width) * 3]
+        g = pixel_data[(x + y * width) * 3 + 1]
+        b = pixel_data[(x + y * width) * 3 + 2]
+        pixel_grid.append([r, g, b])
+    return pixel_grid
 
 class BitMap:
   def __init__(self, pixels: list, width: int, height: int, position: list=[0, 0], color: list = (255, 255, 255), scale: int=1):

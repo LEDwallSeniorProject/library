@@ -2,8 +2,8 @@ from matrix_library import canvas as c, shapes as s
 import random
 
 # Define dimensions
-width = 8
-height = 8
+width = 32
+height = 32
 
 # Create a blank bitmap (initialized to white) in 1D format
 bitmap = [[None]] * (width * height)
@@ -17,8 +17,9 @@ for i in range(width * height):
   set_pixel(i, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
     
 canvas = c.Canvas()
+bitmap = s.ColoredBitMap(bitmap, width, height, (64-(width/2), 64-(height/2)), 1)
 
 while True:
     canvas.clear()
-    canvas.add(s.ColoredBitMap(bitmap, width, height, (0, 0), 1))
+    canvas.add(bitmap)
     canvas.draw()

@@ -9,7 +9,7 @@ headerline = s.Line((8, 28), (120, 28), (255, 0, 0), thickness=1)
 menuheader = s.Phrase("MENU", (0, 0), (255, 255, 255), size=3.5, auto_newline=True)
 demoheader = s.Phrase("Demos", (0, 30), (255, 255, 255), size=3, auto_newline=True)
 gamesheader = s.Phrase("Games", (0, 60), (255, 255, 255), size=3, auto_newline=True)
-creatornames = s.Phrase("created by Alex Ellie and Palmer", (0, 100), (255, 255, 255), size=1)
+creatornames = s.Phrase("created by Alex, Ellie, and Palmer", (0, 100), (255, 255, 255), size=1)
 
 controller = s.Polygon(s.get_polygon_vertices(4, 30, (5,150)), (0, 0, 255))
 controller2 = s.Polygon(s.get_polygon_vertices(4, 30, (20,150)), (0, 0, 255))

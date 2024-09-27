@@ -107,7 +107,6 @@ class Canvas:
       
     # TODO: Detect if we are connected to the LED matrix
     if self.debug:
-
       # Check for the close event
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -120,16 +119,12 @@ class Canvas:
           pygame.draw.rect(self.screen, self.canvas[i][j], (j * 5, i * 5, 5, 5))
     
       pygame.display.flip()
-
-    else:
-      row = ""
+    else: # If we are connected to the LED matrix
+      
+      self.matrix.Fill(self.color)
+      
       for i in range(len(self.canvas)):
         for j in range(len(self.canvas[i])):
-          if self.canvas[i][j][0] == 0 and self.canvas[i][j][1] == 0 and self.canvas[i][j][2] == 0:
-            row += "-"
-          else:
-            row += "X"
-        row += "\n"
-      print(row)
+          self.matrix.SetPixel(j, i, self.canvas[i][j][0], self.canvas[i][j][1], self.canvas[i][j][2])
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
