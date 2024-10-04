@@ -142,5 +142,8 @@ class Canvas:
       for x in range(len(self.canvas)):
         for y in range(len(self.canvas[x])):
           matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
+      
+      canvas = matrix.CreateFrameCanvas()
+      canvas = matrix.SwapOnVSync(canvas)
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
