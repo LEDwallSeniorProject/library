@@ -135,6 +135,7 @@ class Canvas:
       options.parallel = 1
       options.pwm_bits = 1
       options.brightness = 50
+      options.drop_privileges = False
       
       matrix = m.RGBMatrix(options=options)
       
