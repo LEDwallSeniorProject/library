@@ -4,7 +4,7 @@ import pygame
 import time
 
 try:
-  import rgbmatrix as m
+  from ...rgbmatrix import *
   debug = False
 except:
   import pygame
