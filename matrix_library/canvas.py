@@ -1,6 +1,5 @@
 import numpy as np
 from matrix_library import shapes as s
-import pygame
 import time
 
 try:
