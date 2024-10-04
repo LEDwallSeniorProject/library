@@ -132,7 +132,7 @@ class Canvas:
       options = m.RGBMatrixOptions()
       options.rows = 64
       options.chain_length = 4
-      options.parallel = 2
+      options.parallel = 1
       options.pwm_bits = 1
       options.brightness = 50
       
