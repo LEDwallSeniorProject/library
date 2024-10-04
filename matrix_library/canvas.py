@@ -3,8 +3,15 @@ from matrix_library import shapes as s
 import pygame
 import time
 
+try:
+  import rgbmatrix as m
+  debug = False
+except:
+  import pygame
+  debug = True
+
 class Canvas:
-  def __init__(self, color=(0, 0, 0), debug=True):
+  def __init__(self, color=(0, 0, 0)):
     """
     Initializes a Canvas object with the specified color.
 
@@ -22,10 +29,9 @@ class Canvas:
     self.color = color
     self.canvas = np.full((128, 128, 3), self.color)
     self.points = self.get_points()
-    self.debug = debug
     self.prev_frame_time = time.perf_counter()
 
-    if self.debug:
+    if debug:
       pygame.init()
       self.screen = pygame.display.set_mode((640, 640))
       pygame.display.set_caption("Canvas")
@@ -106,7 +112,7 @@ class Canvas:
       time.sleep(1/FPS - passed_time)
       
     # TODO: Detect if we are connected to the LED matrix
-    if self.debug:
+    if debug:
 
       # Check for the close event
       for event in pygame.event.get():
@@ -121,15 +127,20 @@ class Canvas:
     
       pygame.display.flip()
 
-    else:
-      row = ""
-      for i in range(len(self.canvas)):
-        for j in range(len(self.canvas[i])):
-          if self.canvas[i][j][0] == 0 and self.canvas[i][j][1] == 0 and self.canvas[i][j][2] == 0:
-            row += "-"
-          else:
-            row += "X"
-        row += "\n"
-      print(row)
+    else: # Display on LED matrix display
+      
+      # Set up the options for the matrix
+      options = m.RGBMatrixOptions()
+      options.rows = 64
+      options.chain_length = 4
+      options.parallel = 2
+      options.pwm_bits = 1
+      options.brightness = 50
+      
+      matrix = m.RGBMatrix(options=options)
+      
+      for x in range(len(self.canvas)):
+        for y in range(len(self.canvas[x])):
+          matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
