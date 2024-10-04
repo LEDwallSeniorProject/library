@@ -11,7 +11,7 @@ except:
   debug = True
 
 class Canvas:
-  def __init__(self, color=(0, 0, 0):
+  def __init__(self, color=(0, 0, 0)):
     """
     Initializes a Canvas object with the specified color.
 
