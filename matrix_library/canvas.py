@@ -46,6 +46,8 @@ class Canvas:
       options.gpio_slowdown = 2
       options.drop_privileges = False
       
+      options.show_refresh_rate = True
+      
       self.matrix = m.RGBMatrix(options=options)
       
       self.frame_canvas = self.matrix.CreateFrameCanvas()
