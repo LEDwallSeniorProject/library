@@ -27,7 +27,7 @@ while True:
     print(f"Add: {sum(add_times) / len(add_times)}")
     print(f"Draw: {sum(draw_times) / len(draw_times)}")
     print(f"Frame: {sum(frame_times) / len(frame_times)}")
-    print(f"FPS: {1 / (sum(frame_times) / len(frame_times))}")
+    print(f"Avg FPS: {1 / (sum(frame_times) / len(frame_times))}")
   
   frame_start = time.perf_counter()
   canvas.clear()
