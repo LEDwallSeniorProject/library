@@ -131,7 +131,7 @@ class Canvas:
       # Set up the options for the matrix
       options = m.RGBMatrixOptions()
       options.rows = 64
-      options.chain_length = 4
+      options.chain_length = 1
       options.parallel = 1
       options.pwm_bits = 1
       options.brightness = 50
