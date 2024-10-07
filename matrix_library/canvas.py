@@ -140,14 +140,10 @@ class Canvas:
       options.drop_privileges = False
       
       matrix = m.RGBMatrix(options=options)
-      print("PRELOOP")
       for x in range(len(self.canvas)):
         for y in range(len(self.canvas[x])):
           matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
-          print(f"Set pixel at ({x}, {y}) to {self.canvas[x][y]}")
-      print("POSTLOOP")
       canvas = matrix.CreateFrameCanvas()
       canvas = matrix.SwapOnVSync(canvas)
-      print("END")
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
