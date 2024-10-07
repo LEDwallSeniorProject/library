@@ -4,7 +4,6 @@ import time
 
 try:
   import rgbmatrix as m
-  from concurrent.futures import ThreadPoolExecutor
   debug = False
 except:
   import pygame
@@ -118,11 +117,6 @@ class Canvas:
           if mask[i * 128 + j]:
               self.canvas[i][j] = color
 
-
-  def set_pixels_for_row(y_start, row, set_pixel):
-    for x, color in enumerate(row):
-      set_pixel(y_start, x, color[0], color[1], color[2])
-
   def draw(self):
     
     # Limit the frame rate to a specified value
@@ -154,17 +148,9 @@ class Canvas:
       canvas = self.canvas # Cache locally
       set_pixel = self.frame_canvas.SetPixel # Cache locally
       
-      # for x, row in enumerate(canvas):
-      #   for y, color in enumerate(row):
-      #     set_pixel(y, x, color[0], color[1], color[2])
-      
-      with ThreadPoolExecutor() as executor:
-        futures = []
-        for y, row in enumerate(canvas):
-          futures.append(executor.submit(Canvas.set_pixels_for_row, y, row, set_pixel))
-          
-        for future in futures:
-          future.result()
+      for x, row in enumerate(canvas):
+        for y, color in enumerate(row):
+          set_pixel(y, x, color[0], color[1], color[2])
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
