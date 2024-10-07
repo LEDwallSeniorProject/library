@@ -20,7 +20,7 @@ frame_times = []
 frame = 0
 
 while True:
-  if frame % 1000 == 0 and frame != 0:
+  if frame % 100 == 0 and frame != 0:
     print(f"Frame {frame}")
     print(f"Clear: {sum(clear_times) / len(clear_times)}")
     print(f"Rotate: {sum(rotate_times) / len(rotate_times)}")
