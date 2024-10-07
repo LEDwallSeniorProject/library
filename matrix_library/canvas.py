@@ -123,9 +123,9 @@ class Canvas:
     # Limit the frame rate to a specified value
     FPS = 30
     passed_time = time.perf_counter() - self.prev_frame_time
-    # if passed_time < 1/FPS:
-    #   time.sleep(1/FPS - passed_time)
-    print(1/(passed_time))
+    if passed_time < 1/FPS:
+      time.sleep(1/FPS - passed_time)
+    # print("FPS:", 1/(passed_time))
     
     if debug:
       # Check for the close event
