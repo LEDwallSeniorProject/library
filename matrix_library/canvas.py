@@ -127,7 +127,6 @@ class Canvas:
       pygame.display.flip()
 
     else: # Display on LED matrix display
-      print("START")
       # Set up the options for the matrix
       options = m.RGBMatrixOptions()
       options.rows = 64
@@ -136,7 +135,7 @@ class Canvas:
       options.parallel = 1
       options.hardware_mapping = 'adafruit-hat-pwm'
       options.pixel_mapper_config = 'U-mapper'
-      options.gpio_slowdown = 4
+      options.gpio_slowdown = 2
       options.drop_privileges = False
       
       matrix = m.RGBMatrix(options=options)
