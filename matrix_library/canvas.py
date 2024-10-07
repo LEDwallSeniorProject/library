@@ -142,6 +142,7 @@ class Canvas:
       for x in range(len(self.canvas)):
         for y in range(len(self.canvas[x])):
           matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
+          print(f"Set pixel at ({x}, {y}) to {self.canvas[x][y]}")
       print("POSTLOOP")
       canvas = matrix.CreateFrameCanvas()
       canvas = matrix.SwapOnVSync(canvas)
