@@ -34,7 +34,6 @@ class Canvas:
       pygame.init()
       self.screen = pygame.display.set_mode((640, 640))
       pygame.display.set_caption("Canvas")
-      self.clock = pygame.time.Clock()
     else:
       # Set up the options for the matrix
       options = m.RGBMatrixOptions()
@@ -48,6 +47,8 @@ class Canvas:
       options.drop_privileges = False
       
       self.matrix = m.RGBMatrix(options=options)
+      
+      self.frame_canvas = self.matrix.CreateFrameCanvas()
   
   def clear(self):
     """
@@ -123,9 +124,7 @@ class Canvas:
     if passed_time < 1/FPS:
       time.sleep(1/FPS - passed_time)
       
-    # TODO: Detect if we are connected to the LED matrix
     if debug:
-
       # Check for the close event
       for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -142,8 +141,9 @@ class Canvas:
     else: # Display on LED matrix display
       for x in range(len(self.canvas)):
         for y in range(len(self.canvas[x])):
-          self.matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
-      canvas = self.matrix.CreateFrameCanvas()
-      canvas = self.matrix.SwapOnVSync(canvas)
+          self.frame_canvas.SetPixel(y, x, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
+          
+      # Swap the frames between the working frames
+      self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
