@@ -44,7 +44,7 @@ class Canvas:
       options.parallel = 1
       options.hardware_mapping = 'adafruit-hat-pwm'
       options.pixel_mapper_config = 'U-mapper'
-      options.gpio_slowdown = 1
+      options.gpio_slowdown = 2
       options.drop_privileges = False
       
       self.matrix = m.RGBMatrix(options=options)
@@ -140,9 +140,6 @@ class Canvas:
       pygame.display.flip()
 
     else: # Display on LED matrix display
-      
-      
-      
       for x in range(len(self.canvas)):
         for y in range(len(self.canvas[x])):
           self.matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
