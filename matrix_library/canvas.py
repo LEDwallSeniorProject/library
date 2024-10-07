@@ -131,10 +131,12 @@ class Canvas:
       # Set up the options for the matrix
       options = m.RGBMatrixOptions()
       options.rows = 64
-      options.chain_length = 1
+      options.cols = 64
+      options.chain_length = 4
       options.parallel = 1
-      options.pwm_bits = 1
-      options.brightness = 50
+      options.hardware_mapping = 'adafruit-hat-pwm'
+      options.pixel_mapper_config = 'U-mapper'
+      options.gpio_slowdown = 4
       options.drop_privileges = False
       
       matrix = m.RGBMatrix(options=options)
