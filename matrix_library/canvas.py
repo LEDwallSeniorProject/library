@@ -135,7 +135,7 @@ class Canvas:
       options.parallel = 1
       options.hardware_mapping = 'adafruit-hat-pwm'
       options.pixel_mapper_config = 'U-mapper'
-      options.gpio_slowdown = 2
+      options.gpio_slowdown = 0
       options.drop_privileges = False
       
       matrix = m.RGBMatrix(options=options)
