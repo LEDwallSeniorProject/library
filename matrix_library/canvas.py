@@ -35,6 +35,19 @@ class Canvas:
       self.screen = pygame.display.set_mode((640, 640))
       pygame.display.set_caption("Canvas")
       self.clock = pygame.time.Clock()
+    else:
+      # Set up the options for the matrix
+      options = m.RGBMatrixOptions()
+      options.rows = 64
+      options.cols = 64
+      options.chain_length = 4
+      options.parallel = 1
+      options.hardware_mapping = 'adafruit-hat-pwm'
+      options.pixel_mapper_config = 'U-mapper'
+      options.gpio_slowdown = 1
+      options.drop_privileges = False
+      
+      self.matrix = m.RGBMatrix(options=options)
   
   def clear(self):
     """
@@ -127,22 +140,13 @@ class Canvas:
       pygame.display.flip()
 
     else: # Display on LED matrix display
-      # Set up the options for the matrix
-      options = m.RGBMatrixOptions()
-      options.rows = 64
-      options.cols = 64
-      options.chain_length = 4
-      options.parallel = 1
-      options.hardware_mapping = 'adafruit-hat-pwm'
-      options.pixel_mapper_config = 'U-mapper'
-      options.gpio_slowdown = 1
-      options.drop_privileges = False
       
-      matrix = m.RGBMatrix(options=options)
+      
+      
       for x in range(len(self.canvas)):
         for y in range(len(self.canvas[x])):
-          matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
-      canvas = matrix.CreateFrameCanvas()
-      canvas = matrix.SwapOnVSync(canvas)
+          self.matrix.SetPixel(x, y, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
+      canvas = self.matrix.CreateFrameCanvas()
+      canvas = self.matrix.SwapOnVSync(canvas)
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
