@@ -147,7 +147,7 @@ class Canvas:
       set_pixel = self.frame_canvas.SetPixel # Cache locally
       
       for x, row in enumerate(canvas):
-        changes = np.argwhere(row == self.prev_frame[x]) # Find the changes in the row
+        changes = np.argwhere(row != self.prev_frame[x]) # Find the changes in the row
         for y, color in enumerate(row):
           if y in changes: # If the pixel has changed
             set_pixel(y, x, color[0], color[1], color[2])
