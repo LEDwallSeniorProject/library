@@ -32,7 +32,7 @@ while True:
     print(f"Draw: {sum(draw_times) / len(draw_times)}")
     print(f"Frame: {sum(frame_times) / len(frame_times)}")
     print(f"Avg FPS: {1 / (sum(frame_times) / len(frame_times))}")
-    fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
+  
   
   frame_start = time.perf_counter()
   canvas.clear()
@@ -50,6 +50,7 @@ while True:
     canvas.add(polygon)
     add_times.append(time.perf_counter() - add_start)
   
+  fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
   canvas.add(fps_text)
   
   add_all_times.append(time.perf_counter() - add_all_start)
