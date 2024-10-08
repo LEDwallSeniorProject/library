@@ -51,6 +51,7 @@ class Canvas:
       self.matrix = m.RGBMatrix(options=options)
       
       self.frame_canvas = self.matrix.CreateFrameCanvas()
+      self.prev_frame = np.full((128, 128, 3), self.color)
   
   def clear(self):
     """
@@ -141,18 +142,19 @@ class Canvas:
       pygame.display.flip()
 
     else: # Display on LED matrix display
-      # for x in range(len(self.canvas)):
-      #   for y in range(len(self.canvas[x])):
-      #     self.frame_canvas.SetPixel(y, x, self.canvas[x][y][0], self.canvas[x][y][1], self.canvas[x][y][2])
       
       canvas = self.canvas # Cache locally
       set_pixel = self.frame_canvas.SetPixel # Cache locally
       
       for x, row in enumerate(canvas):
+        changes = np.argwhere(row == self.prev_frame[x]) # Find the changes in the row
         for y, color in enumerate(row):
-          set_pixel(y, x, color[0], color[1], color[2])
+          if y in changes: # If the pixel has changed
+            set_pixel(y, x, color[0], color[1], color[2])
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
+      
+      self.prev_frame = canvas # Record the previous frame
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
