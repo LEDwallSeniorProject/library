@@ -9,6 +9,8 @@ pentagon = s.PolygonOutline(s.get_polygon_vertices(5, 20, (64,64)), (0, 0, 255),
 hexagon = s.PolygonOutline(s.get_polygon_vertices(6, 20, (32,96)), (255, 255, 0), thickness)
 heptagon = s.PolygonOutline(s.get_polygon_vertices(7, 20, (96,96)), (0, 255, 255), thickness)
 
+fps_text = s.Phrase("FPS: ...", [0, 0])
+
 polygons = [triangle, square, pentagon, hexagon, heptagon]
 
 clear_times = []
@@ -30,6 +32,7 @@ while True:
     print(f"Draw: {sum(draw_times) / len(draw_times)}")
     print(f"Frame: {sum(frame_times) / len(frame_times)}")
     print(f"Avg FPS: {1 / (sum(frame_times) / len(frame_times))}")
+    fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
   
   frame_start = time.perf_counter()
   canvas.clear()
@@ -46,6 +49,8 @@ while True:
     add_start = time.perf_counter()
     canvas.add(polygon)
     add_times.append(time.perf_counter() - add_start)
+  
+  canvas.add(fps_text)
   
   add_all_times.append(time.perf_counter() - add_all_start)
   
