@@ -14,6 +14,7 @@ polygons = [triangle, square, pentagon, hexagon, heptagon]
 clear_times = []
 rotate_times = []
 add_times = []
+add_all_times = []
 draw_times = []
 frame_times = []
 
@@ -25,6 +26,7 @@ while True:
     print(f"Clear: {sum(clear_times) / len(clear_times)}")
     print(f"Rotate: {sum(rotate_times) / len(rotate_times)}")
     print(f"Add: {sum(add_times) / len(add_times)}")
+    print(f"Add All: {sum(add_all_times) / len(add_all_times)}")
     print(f"Draw: {sum(draw_times) / len(draw_times)}")
     print(f"Frame: {sum(frame_times) / len(frame_times)}")
     print(f"Avg FPS: {1 / (sum(frame_times) / len(frame_times))}")
@@ -34,6 +36,7 @@ while True:
   clear_end = time.perf_counter()
   clear_times.append(clear_end - frame_start)
   
+  add_all_start = time.perf_counter()
   for polygon in polygons:
     rotate_start = time.perf_counter()
     polygon.rotate(1, (polygon.center[0], polygon.center[1]))
@@ -43,6 +46,8 @@ while True:
     add_start = time.perf_counter()
     canvas.add(polygon)
     add_times.append(time.perf_counter() - add_start)
+  
+  add_all_times.append(time.perf_counter() - add_all_start)
   
   draw_start = time.perf_counter()
   canvas.draw()
