@@ -148,7 +148,7 @@ class Canvas:
       
       for x, row in enumerate(canvas):
         for y, color in enumerate(row):
-          changes = np.argwhere(color != self.prev_frame[x][y])
+          changes = np.argwhere(color == self.prev_frame[x][y])
           if y in changes:
             set_pixel(y, x, color[0], color[1], color[2])
           
