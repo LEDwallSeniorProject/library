@@ -159,7 +159,7 @@ class Canvas:
       
       for x, row in enumerate(canvas):
         for y, color in enumerate(row):
-          set_pixel(y, x, *color)
+          set_pixel(y, x, color[0], color[1], color[2])
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
