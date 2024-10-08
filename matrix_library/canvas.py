@@ -164,7 +164,7 @@ class Canvas:
       
       for x, row in enumerate(canvas):
         for y, color in enumerate(row):
-          if not np.array_equal(color, previous_frame[x, y]):
+          if np.array_equal(color, previous_frame[x, y]):
             set_pixel(y, x, color[0], color[1], color[2])
           
       # Swap the frames between the working frames
