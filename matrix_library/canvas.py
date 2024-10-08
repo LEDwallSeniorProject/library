@@ -154,14 +154,21 @@ class Canvas:
 
     else: # Display on LED matrix display
       
+      previous_frame = getattr(self, "previous_frame", None)
+      
       canvas = self.canvas # Cache locally
       set_pixel = self.frame_canvas.SetPixel # Cache locally
       
+      if previous_frame is None:
+        previous_frame = np.zeros_like(canvas)
+      
       for x, row in enumerate(canvas):
         for y, color in enumerate(row):
+          if not np.array_equal(color, previous_frame[x, y]):
             set_pixel(y, x, color[0], color[1], color[2])
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
+      self.previous_frame = np.copy(canvas)
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
