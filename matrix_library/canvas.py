@@ -97,25 +97,37 @@ class Canvas:
     Returns:
       None
     """
-        
+    
     if isinstance(item, s.ColoredBitMap):
       for pixel in item.pixels:
         mask = pixel.contains_points(self.points)
         color = pixel.color
-        for i in range(len(self.canvas)):
-          for j in range(len(self.canvas[i])):
-            if mask[i * 128 + j]:
-              self.canvas[i][j] = color
-      return  # Early return after processing all bitmaps
+        
+        reshaped_mask = mask.reshape(self.canvas.shape[:2])
+        self.canvas[reshaped_mask] = color
+      return
+        
+    # if isinstance(item, s.ColoredBitMap):
+    #   for pixel in item.pixels:
+    #     mask = pixel.contains_points(self.points)
+    #     color = pixel.color
+    #     for i in range(len(self.canvas)):
+    #       for j in range(len(self.canvas[i])):
+    #         if mask[i * 128 + j]:
+    #           self.canvas[i][j] = color
+    #   return  # Early return after processing all bitmaps
 
     mask = item.contains_points(self.points)
     color = item.color
     
+    reshaped_mask = mask.reshape(self.canvas.shape[:2])
+    self.canvas[reshaped_mask] = color
+    
     # Process the letter after checking it
-    for i in range(len(self.canvas)):
-      for j in range(len(self.canvas[i])):
-          if mask[i * 128 + j]:
-              self.canvas[i][j] = color
+    # for i in range(len(self.canvas)):
+    #   for j in range(len(self.canvas[i])):
+    #       if mask[i * 128 + j]:
+    #           self.canvas[i][j] = color
 
   def draw(self):
     

@@ -12,7 +12,6 @@ bitmap = [[None]] * (width * height)
 def set_pixel(index, color):
   bitmap[index] = color
 
-# Example: Draw a simple pattern (a diagonal line)
 for i in range(width * height):
   set_pixel(i, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
     
