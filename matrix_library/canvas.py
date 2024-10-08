@@ -51,7 +51,6 @@ class Canvas:
       self.matrix = m.RGBMatrix(options=options)
       
       self.frame_canvas = self.matrix.CreateFrameCanvas()
-      self.prev_frame = np.full((128, 128, 3), self.color)
   
   def clear(self):
     """
@@ -148,13 +147,9 @@ class Canvas:
       
       for x, row in enumerate(canvas):
         for y, color in enumerate(row):
-          changes = np.argwhere(color == self.prev_frame[x][y])
-          if y in changes:
             set_pixel(y, x, color[0], color[1], color[2])
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
-      
-      self.prev_frame = canvas # Record the previous frame
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
