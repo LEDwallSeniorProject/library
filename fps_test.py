@@ -50,7 +50,8 @@ while True:
     canvas.add(polygon)
     add_times.append(time.perf_counter() - add_start)
   
-  fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
+  if len(frame_times) != 0:
+    fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
   canvas.add(fps_text)
   
   add_all_times.append(time.perf_counter() - add_all_start)
