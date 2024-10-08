@@ -157,9 +157,14 @@ class Canvas:
       canvas = self.canvas # Cache locally
       set_pixel = self.frame_canvas.SetPixel # Cache locally
       
-      for x, row in enumerate(canvas):
-        for y, color in enumerate(row):
-            set_pixel(y, x, color[0], color[1], color[2])
+      # for x, row in enumerate(canvas):
+      #   for y, color in enumerate(row):
+      #       set_pixel(y, x, color[0], color[1], color[2])
+      
+      for x in range(canvas.shape[0]):
+        for y in range(canvas.shape[1]):
+          color = canvas[x, y]
+          set_pixel(y, x, *color)
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
