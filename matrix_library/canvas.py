@@ -45,10 +45,11 @@ class Canvas:
       options.parallel = 1
       options.hardware_mapping = 'adafruit-hat-pwm'
       options.pixel_mapper_config = 'U-mapper'
-      options.gpio_slowdown = 2
-      options.drop_privileges = False
+      options.gpio_slowdown = 3
+      options.drop_privileges = True
       
-      options.show_refresh_rate = True
+      options.limit_refresh_rate_hz = 60
+      options.show_refresh_rate = False
       
       self.matrix = m.RGBMatrix(options=options)
       
@@ -159,19 +160,16 @@ class Canvas:
 
     else: # Display on LED matrix display
 
+      # OLD WAY
       # canvas = self.canvas # Cache locally
       # set_pixel = self.frame_canvas.SetPixel # Cache locally
-      
       # for x, row in enumerate(canvas):
       #   for y, color in enumerate(row):
       #     set_pixel(y, x, color[0], color[1], color[2])
 
-      #convert the numpy image to a PIL image
-      #print(self.canvas[0][0])
+      # convert the numpy array to a PIL image
       frame = Image.fromarray(self.canvas)
-      #print(list(frame.getdata())[0][0])
       self.frame_canvas.SetImage(frame)
-      #time.sleep(10)
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
