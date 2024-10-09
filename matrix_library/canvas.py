@@ -1,6 +1,7 @@
 import numpy as np
 from matrix_library import shapes as s
 import time
+from PIL import Image
 
 try:
   import rgbmatrix as m
@@ -26,7 +27,8 @@ class Canvas:
     None
     """
     self.color = color
-    self.canvas = np.full((128, 128, 3), self.color)
+    self.canvas = np.zeros([128, 128, 3], dtype=np.uint8)
+    self.canvas[:,:] = color
     self.points = self.get_points()
     self.prev_frame_time = time.perf_counter()
 
@@ -54,7 +56,7 @@ class Canvas:
   
   def clear(self):
     """
-    Clears the canvas by filling it with the specified color.
+    Clears the canvas by filling it with black.
 
     Parameters:
     - None
@@ -62,7 +64,8 @@ class Canvas:
     Returns:
     - None
     """
-    self.canvas = np.full((128, 128, 3), self.color)
+    self.canvas = np.zeros([128, 128, 3], dtype=np.uint8)
+    self.canvas[:,:] = [0,0,0]
   
   def fill(self, color):
     """
@@ -74,7 +77,8 @@ class Canvas:
     Returns:
     None
     """
-    self.canvas = np.full((128, 128, 3), color)
+    self.canvas = np.zeros([128, 128, 3], dtype=np.uint8)
+    self.canvas[:,:] = color
 
   def get_points(self):
     """
@@ -135,7 +139,8 @@ class Canvas:
     FPS = 30
     passed_time = time.perf_counter() - self.prev_frame_time
     if passed_time < 1/FPS:
-      time.sleep(1/FPS - passed_time)
+      #time.sleep(1/FPS - passed_time)
+      pass
     # print("FPS:", 1/(passed_time))
     
     if debug:
@@ -154,12 +159,19 @@ class Canvas:
 
     else: # Display on LED matrix display
 
-      canvas = self.canvas # Cache locally
-      set_pixel = self.frame_canvas.SetPixel # Cache locally
+      # canvas = self.canvas # Cache locally
+      # set_pixel = self.frame_canvas.SetPixel # Cache locally
       
-      for x, row in enumerate(canvas):
-        for y, color in enumerate(row):
-          set_pixel(y, x, color[0], color[1], color[2])
+      # for x, row in enumerate(canvas):
+      #   for y, color in enumerate(row):
+      #     set_pixel(y, x, color[0], color[1], color[2])
+
+      #convert the numpy image to a PIL image
+      #print(self.canvas[0][0])
+      frame = Image.fromarray(self.canvas)
+      #print(list(frame.getdata())[0][0])
+      self.frame_canvas.SetImage(frame)
+      #time.sleep(10)
           
       # Swap the frames between the working frames
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
