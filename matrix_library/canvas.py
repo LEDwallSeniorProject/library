@@ -150,11 +150,18 @@ class Canvas:
         if event.type == pygame.QUIT:
             quit()
 
-      self.screen.fill(self.color)
+      # self.screen.fill(self.color)      # NOT sure if needed
+      # OLD fill method
+      # for i in range(len(self.canvas)):
+      #   for j in range(len(self.canvas[i])):
+      #     pygame.draw.rect(self.screen, self.canvas[i][j], (j * 5, i * 5, 5, 5))
 
-      for i in range(len(self.canvas)):
-        for j in range(len(self.canvas[i])):
-          pygame.draw.rect(self.screen, self.canvas[i][j], (j * 5, i * 5, 5, 5))
+      # NEW fill method using pygame blit from a PIL image
+      # https://www.tutorialspoint.com/how-to-convert-pil-image-into-pygame-surface-image
+      frame = Image.fromarray(self.canvas)
+      resized_frame = frame.resize(size = (self.screen.get_height(),self.screen.get_width()), resample = Image.LANCZOS)
+      pygame_surface = pygame.image.fromstring(resized_frame.tobytes(), resized_frame.size, "RGB")
+      self.screen.blit(pygame_surface,(0,0))
     
       pygame.display.flip()
 
