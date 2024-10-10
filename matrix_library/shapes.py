@@ -116,22 +116,21 @@ class Polygon:
         mask = np.zeros(shape, dtype=bool)
         mask[rr, cc] = True
         return mask
-
-# Example usage
-if __name__ == "__main__":
-    vertices = np.array([[100, 100], [150, 50], [200, 100], [150, 150]])
-    polygon = Polygon(vertices)
-
-    # Create a binary mask for a 500x500 image
-    mask = polygon.get_polygon_mask((500, 500))
-
-    # Visualize the mask
-    import matplotlib.pyplot as plt
-
-    plt.imshow(mask, cmap='gray')
-    plt.title("Polygon Mask")
-    plt.axis('off')
-    plt.show()
+    
+    def get_center(self):
+      # Initialize sums for x and y coordinates
+      sum_x = sum_y = 0
+      
+      # Loop through each vertex (assumed as a tuple (x, y))
+      for x, y in self.vertices:
+          sum_x += x
+          sum_y += y
+      
+      # Calculate the averages of the x and y coordinates
+      centroid_x = sum_x / len(self.vertices)
+      centroid_y = sum_y / len(self.vertices)
+      
+      return (centroid_x, centroid_y)
 
 def get_polygon_vertices(sides: int, radius: float=1, center: tuple=(0, 0)):
     """
@@ -158,6 +157,8 @@ def get_polygon_vertices(sides: int, radius: float=1, center: tuple=(0, 0)):
         vertices.append((x, y))
     
     return vertices
+  
+
 
 class Circle:
     def __init__(self, radius: float, center: tuple, color: tuple = (255, 255, 255)):
@@ -232,98 +233,55 @@ class Circle:
         mask[rr, cc] = True
         return mask
 
-class Line:
-    def __init__(self, start, end, color=(255, 255, 255), width=1):
-        """
-        Initializes a Line object with the given start and end points, color, and width.
-        """
-        self.start = np.array(start, dtype=float)
-        self.end = np.array(end, dtype=float)
-        self.color = color
-        self.width = width
-        self.image = self.create_line_image()
+class Line(Polygon):
+  def __init__(self, start: list, end: list, color: list=(255, 255, 255), thickness: float=0.5):
+    if start == end:
+      raise ValueError("The start and end points of a line cannot be the same.")
+    elif thickness <= 0:
+      raise ValueError("The thickness of a line must be greater than 0.")
+    elif len(start) != 2 or len(end) != 2:
+      raise ValueError("The start and end points must be list of length 2.")
+    elif len(color) != 3:
+      raise ValueError("The color must be a list of length 3.")
+    
+    self.start = start
+    self.end = end
+    self.thickness = thickness
+    self.length = math.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
+    
+    # Calculate the angle of the line
+    self.angle = self.calculate_angle()
+    self.end = [self.start[0], self.start[1] + self.length]
+    
+    verts1 = [self.start[0] + self.thickness, self.start[1] + self.thickness]
+    verts2 = [self.start[0] + self.thickness, self.start[1] - self.thickness]
+    verts3 = [self.start[0] - self.thickness, self.start[1] - self.thickness]
+    verts4 = [self.start[0] - self.thickness, self.start[1] + self.thickness]
+    verts5 = [self.end[0] - self.thickness, self.end[1] - self.thickness]
+    verts6 = [self.end[0] - self.thickness, self.end[1] + self.thickness] 
+    verts7 = [self.end[0] + self.thickness, self.end[1] + self.thickness]
+    verts8 = [self.end[0] + self.thickness, self.end[1] - self.thickness]
+    self.vertices = [verts1, verts2, verts3, verts4, verts5, verts6, verts7, verts8]
 
-    def create_line_image(self):
-        """
-        Create an image of the line segment.
-        """
-        # Calculate the bounding box size for the line
-        x_min = min(self.start[0], self.end[0])
-        y_min = min(self.start[1], self.end[1])
-        x_max = max(self.start[0], self.end[0])
-        y_max = max(self.start[1], self.end[1])
+    self.rotate(-self.angle, self.start)
 
-        # Ensure the image size accounts for the line width
-        width = int(x_max - x_min + self.width)
-        height = int(y_max - y_min + self.width)
-
-        # Create an RGBA image with a transparent background
-        img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(img)
-
-        # Adjust coordinates relative to the image size
-        relative_start = (self.start[0] - x_min, self.start[1] - y_min)
-        relative_end = (self.end[0] - x_min, self.end[1] - y_min)
-
-        # Draw the line on the image
-        draw.line([relative_start, relative_end], fill=self.color + (255,), width=self.width)
-
-        return img
-
-    def rotate(self, angle_degrees, center=(0, 0)):
-        """
-        Rotate the line segment by a specified angle around a given center.
-        """
-        # Convert angle to radians
-        angle_radians = np.radians(angle_degrees)
-
-        # Rotation matrix
-        rotation_matrix = np.array([
-            [np.cos(angle_radians), -np.sin(angle_radians)],
-            [np.sin(angle_radians), np.cos(angle_radians)]
-        ])
-
-        # Translate points to origin (relative to the center), rotate, and translate back
-        translated_start = self.start - center
-        translated_end = self.end - center
-
-        rotated_start = np.dot(rotation_matrix, translated_start) + center
-        rotated_end = np.dot(rotation_matrix, translated_end) + center
-
-        # Update the line's start and end points
-        self.start = rotated_start
-        self.end = rotated_end
-
-        # Recreate the image with the rotated line
-        self.image = self.create_line_image()
-
-    def translate(self, dx, dy):
-        """
-        Translate the line segment by a given distance along the x and y axes.
-        """
-        self.start += np.array([dx, dy])
-        self.end += np.array([dx, dy])
-        self.image = self.create_line_image()
-
-    def contains_points(self, points):
-        """
-        Check if the given points are on the line segment.
-        """
-        mask = np.zeros(len(points), dtype=bool)
-        for i, point in enumerate(points):
-            point = np.array(point)
-
-            # Check if the point lies between the start and end of the line segment
-            d_start = np.linalg.norm(point - self.start)
-            d_end = np.linalg.norm(point - self.end)
-            d_total = np.linalg.norm(self.start - self.end)
-
-            # The point lies on the line if the sum of distances from start and end is equal to the total length
-            if np.isclose(d_start + d_end, d_total, atol=self.width / 2):
-                mask[i] = True
-
-        return mask
-
+    self.path = Path(self.vertices)
+    self.color = color
+  
+  def calculate_angle(self):
+    line1 = (self.end[0] - self.start[0], self.end[1] - self.start[1])
+    line2 = (0, 1)
+    
+    dot_product = line1[0] * line2[0] + line1[1] * line2[1]
+    magnitude_line1 = math.sqrt(line1[0] ** 2 + line1[1] ** 2)
+    magnitude_line2 = math.sqrt(line2[0] ** 2 + line2[1] ** 2)
+    
+    cos_angle = dot_product / (magnitude_line1 * magnitude_line2)
+    angle_rads = math.acos(cos_angle)
+    angle_deg = math.degrees(angle_rads)
+    
+    return angle_deg
+      
 # TODO: Implement PolygonOutline class features
 class PolygonOutline(Polygon):
   def __init__(self, vertices: tuple, color: tuple=(255, 255, 255), thickness: float=1):
@@ -338,7 +296,7 @@ class PolygonOutline(Polygon):
     self.vertices = vertices
     self.color = color
     self.thickness = thickness
-    self.center = (64,64)
+    self.center = self.get_center()
     self.inner_vertices = get_polygon_vertices(len(self.vertices), self.distance(self.center[0], self.center[1], self.vertices[0][0], self.vertices[0][1]) - self.thickness, self.center)
 
   def change_inner_vertices(self, inner_vertices):
@@ -386,7 +344,6 @@ class PolygonOutline(Polygon):
     mask = np.logical_and(poly1_mask, np.logical_not(poly2_mask))
     return mask
   
-
 class CircleOutline(PolygonOutline):
   def __init__(self, radius, center, color=(255, 255, 255), thickness=1):
     """
