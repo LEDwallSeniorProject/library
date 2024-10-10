@@ -309,91 +309,43 @@ class CircleOutline(PolygonOutline):
 
     mask = np.logical_and(circle1_mask, np.logical_not(circle2_mask))
     return mask
-  
-class Letter:
-    def __init__(self, char: str, position: list, color: list, size: int):
-        self.char = char
-        self.position = position
-        self.color = color
-        self.size = size * 8
-        self.font = ImageFont.load_default(self.size)
-        # truetype("arial.ttf", size * 8)  # Adjust the font and size as necessary
-        self.image = self.create_letter_image()
-
-    def create_letter_image(self):
-        """Create a binary image of the letter."""
-        img = Image.new('RGBA', (self.size * 8, self.size * 8), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(img)
-        fill_color = tuple(self.color) + (255,)  # Full opacity
-        draw.text((0, 0), self.char, fill=fill_color, font=self.font)
-        return img
-
-    def set_char(self, char: str):
-        """Update the character and recreate the image."""
-        self.char = char
-        self.image = self.create_letter_image()
-
-    def set_position(self, position: list):
-        """Update the position of the letter."""
-        self.position = position
-
-    def contains_points(self, points: np.ndarray):
-        """Check if the given points are within the letter's image."""
-        mask = np.zeros(len(points), dtype=bool)
-        letter_x, letter_y = self.position
-        letter_width, letter_height = self.image.size
-
-        # Create a mask for the letter's image
-        letter_image = self.image.convert("L")  # Convert to grayscale for easier alpha handling
-        letter_mask = np.array(letter_image)  # Convert the image to a numpy array
-
-        # Loop through each point and check if it falls within the letter's bounding box
-        for i, (px, py) in enumerate(points):
-            if (letter_x <= px < letter_x + letter_width) and (letter_y <= py < letter_y + letter_height):
-                # Check the alpha channel value
-                alpha_value = letter_mask[py - letter_y, px - letter_x]
-                if alpha_value > 0:  # If alpha value is greater than 0, the point is within the letter
-                    mask[i] = True
-
-        return mask
-
 
 class Phrase:
-    def __init__(self, text: str, position: list = [0, 0], color: list = [255, 255, 255], size: int = 1, auto_newline: bool = False):
+    def __init__(self, text: str, position: list=[0, 0], color: list=[255, 255, 255], size: int=1, auto_newline: bool=False):
         self.text: str = text
         self.position: list = list(position)
         self.color = color
         self.auto_newline = auto_newline
         self.size: int = size
         self.letters = self.get_letters()
-
+    
     def set_text(self, text: str):
         """Only update letters for characters that have changed."""
         if text != self.text:
             self.update_letters(text)
         self.text = text
-
+    
     def set_position(self, position: list):
         """Only update letters if the position has changed."""
         if position != self.position:
             self.position = position
             self.update_positions()
-
+    
     def get_width(self):
-        return sum([letter.image.size[0] for letter in self.letters])
+        return sum([letter.get_width() for letter in self.letters])
 
     def translate(self, dx: float, dy: float):
         for letter in self.letters:
-            letter.set_position([letter.position[0] + dx, letter.position[1] + dy])
+            letter.translate(dx, dy)
         self.position[0] += dx
         self.position[1] += dy
-
+    
     def get_letters(self):
         """Initial creation of the letters based on the text and position."""
         letters = []
         x, y = self.position
         for char in self.text:
-            if self.auto_newline and x >= 128 - (8 * self.size):  # Assuming a width of 128 pixels
+            if self.auto_newline and x >= 128 - (8 * self.size):
                 x = self.position[0]
                 y += 8 * self.size
             letters.append(Letter(char, [x, y], self.color, size=self.size))
@@ -405,7 +357,7 @@ class Phrase:
         x, y = self.position
         new_letters = []
         for i, char in enumerate(new_text):
-            if self.auto_newline and x >= 128 - (8 * self.size):  # Assuming a width of 128 pixels
+            if self.auto_newline and x >= 128 - (8 * self.size):
                 x = self.position[0]
                 y += 8 * self.size
             if i < len(self.letters):
@@ -416,7 +368,7 @@ class Phrase:
                 # Create a new letter if this is beyond the current letters list
                 new_letters.append(Letter(char, [x, y], self.color, size=self.size))
             x += 8 * self.size
-
+        
         # If the new text is shorter, trim the extra letters
         self.letters = new_letters
 
@@ -426,93 +378,15 @@ class Phrase:
         for letter in self.letters:
             letter.set_position([x, y])
             x += 8 * self.size
-            if self.auto_newline and x >= 128 - (8 * self.size):  # Assuming a width of 128 pixels
+            if self.auto_newline and x >= 128 - (8 * self.size):
                 x = self.position[0]
                 y += 8 * self.size
 
     def contains_points(self, points: np.ndarray):
         mask = np.zeros(len(points), dtype=bool)
         for letter in self.letters:
-            mask |= letter.contains_points(points)  # Combine masks from all letters
+            mask |= letter.contains_points(points)
         return mask
-
-# class Phrase:
-#     def __init__(self, text: str, position: list=[0, 0], color: list=[255, 255, 255], size: int=1, auto_newline: bool=False):
-#         self.text: str = text
-#         self.position: list = list(position)
-#         self.color = color
-#         self.auto_newline = auto_newline
-#         self.size: int = size
-#         self.letters = self.get_letters()
-    
-#     def set_text(self, text: str):
-#         """Only update letters for characters that have changed."""
-#         if text != self.text:
-#             self.update_letters(text)
-#         self.text = text
-    
-#     def set_position(self, position: list):
-#         """Only update letters if the position has changed."""
-#         if position != self.position:
-#             self.position = position
-#             self.update_positions()
-    
-#     def get_width(self):
-#         return sum([letter.get_width() for letter in self.letters])
-
-#     def translate(self, dx: float, dy: float):
-#         for letter in self.letters:
-#             letter.translate(dx, dy)
-#         self.position[0] += dx
-#         self.position[1] += dy
-    
-#     def get_letters(self):
-#         """Initial creation of the letters based on the text and position."""
-#         letters = []
-#         x, y = self.position
-#         for char in self.text:
-#             if self.auto_newline and x >= 128 - (8 * self.size):
-#                 x = self.position[0]
-#                 y += 8 * self.size
-#             letters.append(Letter(char, [x, y], self.color, size=self.size))
-#             x += 8 * self.size
-#         return letters
-
-#     def update_letters(self, new_text: str):
-#         """Update only the letters that have changed, reusing existing ones where possible."""
-#         x, y = self.position
-#         new_letters = []
-#         for i, char in enumerate(new_text):
-#             if self.auto_newline and x >= 128 - (8 * self.size):
-#                 x = self.position[0]
-#                 y += 8 * self.size
-#             if i < len(self.letters):
-#                 # Reuse the existing letter and update its character if needed
-#                 self.letters[i].set_char(char)
-#                 new_letters.append(self.letters[i])
-#             else:
-#                 # Create a new letter if this is beyond the current letters list
-#                 new_letters.append(Letter(char, [x, y], self.color, size=self.size))
-#             x += 8 * self.size
-        
-#         # If the new text is shorter, trim the extra letters
-#         self.letters = new_letters
-
-#     def update_positions(self):
-#         """Update the positions of all letters based on the new starting position."""
-#         x, y = self.position
-#         for letter in self.letters:
-#             letter.set_position([x, y])
-#             x += 8 * self.size
-#             if self.auto_newline and x >= 128 - (8 * self.size):
-#                 x = self.position[0]
-#                 y += 8 * self.size
-
-#     def contains_points(self, points: np.ndarray):
-#         mask = np.zeros(len(points), dtype=bool)
-#         for letter in self.letters:
-#             mask |= letter.contains_points(points)
-#         return mask
 
 class Pixel:
   def __init__(self, position: list, color: list=[255, 255, 255], scale: int=1):
@@ -610,866 +484,866 @@ class BitMap:
         self.cached_points = None
         self.cached_mask = None
   
-# class Letter(BitMap):
-#   def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
-#         self.char = char
-#         self.position = position
-#         self.color = color
-#         self.size = size
+class Letter(BitMap):
+  def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
+        self.char = char
+        self.position = position
+        self.color = color
+        self.size = size
         
-#         # Initialize the character mask and the bitmap
-#         self.mask_lookup = self.init_char_mask_lookup()
-#         char_mask = self.get_char_mask()
-#         super().__init__(char_mask, 8, 8, position, color, size)
+        # Initialize the character mask and the bitmap
+        self.mask_lookup = self.init_char_mask_lookup()
+        char_mask = self.get_char_mask()
+        super().__init__(char_mask, 8, 8, position, color, size)
         
 
-#   def set_char(self, new_char: str):
-#         """Update the character and invalidate the cache."""
-#         if new_char != self.char:
-#             self.char = new_char
-#             self._invalidate_cache()
-#             # Update the bitmap for the new character
-#             char_mask = self.get_char_mask()
-#             self.set_bitmap(char_mask, 8, 8)
+  def set_char(self, new_char: str):
+        """Update the character and invalidate the cache."""
+        if new_char != self.char:
+            self.char = new_char
+            self._invalidate_cache()
+            # Update the bitmap for the new character
+            char_mask = self.get_char_mask()
+            self.set_bitmap(char_mask, 8, 8)
   
-#   def set_position(self, new_position: list):
-#         """Update the position and invalidate the cache."""
-#         if new_position != self.position:
-#             self.position = new_position
+  def set_position(self, new_position: list):
+        """Update the position and invalidate the cache."""
+        if new_position != self.position:
+            self.position = new_position
   
-#   def set_color(self, new_color: list):
-#         """Update the color and invalidate the cache."""
-#         if new_color != self.color:
-#             self.color = new_color
+  def set_color(self, new_color: list):
+        """Update the color and invalidate the cache."""
+        if new_color != self.color:
+            self.color = new_color
   
-#   def get_width(self):
-#     return 8 * self.scale
+  def get_width(self):
+    return 8 * self.scale
 
-#   def get_char_mask(self):
-#     if self.char in self.mask_lookup:
-#       return self.mask_lookup[self.char]
-#     else:
-#       return [ # Return an checkered pattern if the character is not found
-#         False,True,False,True,False,True,False,True,
-#         True,False,True,False,True,False,True,False,
-#         False,True,False,True,False,True,False,True,
-#         True,False,True,False,True,False,True,False,
-#         False,True,False,True,False,True,False,True,
-#         True,False,True,False,True,False,True,False,
-#         False,True,False,True,False,True,False,True,
-#         True,False,True,False,True,False,True,False,
-#       ]
+  def get_char_mask(self):
+    if self.char in self.mask_lookup:
+      return self.mask_lookup[self.char]
+    else:
+      return [ # Return an checkered pattern if the character is not found
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+      ]
     
-#   def init_char_mask_lookup(self):
-#     return { # 8x8 mask for each letter
-#       ' ': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '0': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,True,True,True,False,
-#         False,True,True,True,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '1': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '2': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '3': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '4': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '5': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,False,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,False,False,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False, 
-#         False,False,False,False,False,False,False,False, 
-#       ],
-#       '6': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '7': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '8': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '9': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'a': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,False,True,True, 
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'b': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'c': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'd': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'e': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'f': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,True,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'g': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#       ],
-#       'h': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'i': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'j': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,False,True,True,True,False,False,False,
-#       ],
-#       'k': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'l': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'm': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,False,True,True,False,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'n': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'o': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'p': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#       ],
-#       'q': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,True,True,True,
-#         False,False,False,False,False,True,True,False,
-#       ],
-#       'r': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,True,False,True,True,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       's': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       't': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,False,True,True,False,True,True,False,
-#         False,False,False,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'u': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,False,True,True,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'v': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'w': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,False,True,True,False,True,True,True,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'x': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,True,True,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'y': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#       ],
-#       'z': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'A': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'B': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'C': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'D': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'E': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'F': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'G': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'H': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'I': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'J': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,False,True,True,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,False,True,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'K': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,True,True,True,True,False,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'L': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'M': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,True,True,
-#         False,True,True,True,False,True,True,True,
-#         False,True,True,True,True,True,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,False,False,False,True,True,
-#         False,True,True,False,False,False,True,True,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'N': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,False,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,False,True,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'O': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'P': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'Q': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,True,True,False,False,
-#         False,False,True,True,True,False,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'R': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'S': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,False,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'T': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'U': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'V': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'W': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,False,True,True,
-#         False,True,True,False,False,False,True,True,
-#         False,True,True,False,True,False,True,True,
-#         False,True,True,True,True,True,True,True,
-#         False,True,True,True,False,True,True,True,
-#         False,True,True,False,False,False,True,True,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'X': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'Y': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       'Z': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '!': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '?': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,False,False,False,False,True,True,False,
-#         False,False,False,True,True,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '&': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,False,False,False,
-#         False,True,True,False,True,True,False,False,
-#         False,False,True,True,True,False,True,True,
-#         False,True,True,False,True,True,True,False,
-#         True,True,False,False,False,True,True,False,
-#         False,True,True,True,True,False,True,True,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '@': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,True,True,False,False,True,True,False,
-#         False,True,True,False,True,True,True,False,
-#         False,True,True,False,True,True,False,False,
-#         False,True,True,False,False,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '$': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,True,False,
-#         False,True,False,False,False,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,False,False,False,True,False,
-#         False,True,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#       ],
-#       '-': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '+': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '=': [
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#         False,True,True,True,True,True,True,False,
-#         False,True,True,True,True,True,True,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '*': [
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,True,True,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,False,False,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '%': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,True,False,False,False,True,False,
-#         False,True,False,True,False,True,True,False,
-#         False,False,True,False,True,True,False,False,
-#         False,False,False,True,True,False,True,False,
-#         False,False,True,True,False,True,False,True,
-#         False,True,True,False,False,False,True,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '.': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       ',': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#       ],
-#       ':': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       ';': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,True,True,False,False,False,False,
-#       ],
-#       '(': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       ')': [
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '\'': [
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,True,True,False,False,False,
-#         False,False,False,False,True,False,False,False,
-#         False,False,False,True,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ],
-#       '\"': [
-#         False,False,True,True,False,True,True,False,
-#         False,False,True,True,False,True,True,False,
-#         False,False,False,True,False,False,True,False,
-#         False,False,True,False,False,True,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#         False,False,False,False,False,False,False,False,
-#       ]
-#     }
+  def init_char_mask_lookup(self):
+    return { # 8x8 mask for each letter
+      ' ': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '0': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,True,True,True,False,
+        False,True,True,True,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '1': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '2': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '3': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '4': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '5': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,False,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,False,False,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False, 
+        False,False,False,False,False,False,False,False, 
+      ],
+      '6': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '7': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '8': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '9': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'a': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,False,True,True, 
+        False,False,False,False,False,False,False,False,
+      ],
+      'b': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'c': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'd': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,True,True,False,
+        False,False,False,False,False,True,True,False,
+        False,False,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'e': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'f': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,True,False,False,
+        False,False,True,True,False,False,False,False,
+        False,True,True,True,True,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'g': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+      ],
+      'h': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'i': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'j': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,True,True,False,False,
+        False,True,True,False,True,True,False,False,
+        False,False,True,True,True,False,False,False,
+      ],
+      'k': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,True,True,False,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'l': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'm': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,False,True,True,False,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,False,False,False,False,False,False,False,
+      ],
+      'n': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,False,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'o': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'p': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+      ],
+      'q': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,True,True,True,
+        False,False,False,False,False,True,True,False,
+      ],
+      'r': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,True,False,True,True,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      's': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      't': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,False,True,True,False,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,False,True,True,False,True,True,False,
+        False,False,False,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'u': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,False,True,True,
+        False,False,False,False,False,False,False,False,
+      ],
+      'v': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'w': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,False,True,True,False,True,True,True,
+        False,False,False,False,False,False,False,False,
+      ],
+      'x': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,True,True,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'y': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+      ],
+      'z': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'A': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'B': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'C': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'D': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'E': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'F': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'G': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'H': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'I': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'J': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,False,True,True,False,False,
+        False,True,True,False,True,True,False,False,
+        False,False,True,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'K': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,True,True,False,False,False,
+        False,True,True,True,True,False,False,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'L': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'M': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,True,True,
+        False,True,True,True,False,True,True,True,
+        False,True,True,True,True,True,True,True,
+        False,True,True,False,True,False,True,True,
+        False,True,True,False,False,False,True,True,
+        False,True,True,False,False,False,True,True,
+        False,False,False,False,False,False,False,False,
+      ],
+      'N': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,False,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,False,True,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'O': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'P': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'Q': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,True,True,False,False,
+        False,False,True,True,True,False,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'R': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'S': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,False,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'T': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'U': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'V': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'W': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,False,True,True,
+        False,True,True,False,False,False,True,True,
+        False,True,True,False,True,False,True,True,
+        False,True,True,True,True,True,True,True,
+        False,True,True,True,False,True,True,True,
+        False,True,True,False,False,False,True,True,
+        False,False,False,False,False,False,False,False,
+      ],
+      'X': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'Y': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,False,True,True,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      'Z': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,False,False,False,False,
+        False,True,True,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '!': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '?': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,False,False,False,False,True,True,False,
+        False,False,False,True,True,True,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '&': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,False,False,False,
+        False,True,True,False,True,True,False,False,
+        False,False,True,True,True,False,True,True,
+        False,True,True,False,True,True,True,False,
+        True,True,False,False,False,True,True,False,
+        False,True,True,True,True,False,True,True,
+        False,False,False,False,False,False,False,False,
+      ],
+      '@': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,True,True,False,False,True,True,False,
+        False,True,True,False,True,True,True,False,
+        False,True,True,False,True,True,False,False,
+        False,True,True,False,False,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '$': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,True,False,
+        False,True,False,False,False,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,False,False,False,True,False,
+        False,True,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+      ],
+      '-': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '+': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '=': [
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+        False,True,True,True,True,True,True,False,
+        False,True,True,True,True,True,True,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '*': [
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,True,True,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,False,False,True,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '%': [
+        False,False,False,False,False,False,False,False,
+        False,False,True,False,False,False,True,False,
+        False,True,False,True,False,True,True,False,
+        False,False,True,False,True,True,False,False,
+        False,False,False,True,True,False,True,False,
+        False,False,True,True,False,True,False,True,
+        False,True,True,False,False,False,True,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '.': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      ',': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,False,False,False,False,
+      ],
+      ':': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      ';': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,True,True,False,False,False,False,
+      ],
+      '(': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      ')': [
+        False,False,False,False,False,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '\'': [
+        False,False,False,True,True,False,False,False,
+        False,False,False,True,True,False,False,False,
+        False,False,False,False,True,False,False,False,
+        False,False,False,True,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ],
+      '\"': [
+        False,False,True,True,False,True,True,False,
+        False,False,True,True,False,True,True,False,
+        False,False,False,True,False,False,True,False,
+        False,False,True,False,False,True,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+        False,False,False,False,False,False,False,False,
+      ]
+    }
