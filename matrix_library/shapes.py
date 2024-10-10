@@ -1,6 +1,8 @@
 from matplotlib.path import Path
 import numpy as np
 import math
+import copy
+
 
 class Polygon:
   def __init__(self, vertices: list, color: tuple=(255, 255, 255)):
@@ -291,47 +293,82 @@ class CircleOutline(PolygonOutline):
     return mask
 
 class Phrase:
-  def __init__(self, text: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1, auto_newline:bool=False):
-    self.text:str = text
-    self.position:list = list(position)
-    self.color = color
-    self.auto_newline = auto_newline
-    self.size: int = size
-    self.letters = self.get_letters()
-  
-  def set_text(self, text: str):
-    self.text = text
-    self.letters = self.get_letters()
-  
-  def set_position(self, position: list):
-    self.position = position
-    self.letters = self.get_letters()
-  
-  def get_width(self):
-    return sum([letter.get_width() for letter in self.letters])
-
-  def translate(self, dx: float, dy: float):
-    for letter in self.letters:
-      letter.translate(dx, dy)
-    self.position[0] += dx
-    self.position[1] += dy
+    def __init__(self, text: str, position: list=[0, 0], color: list=[255, 255, 255], size: int=1, auto_newline: bool=False):
+        self.text: str = text
+        self.position: list = list(position)
+        self.color = color
+        self.auto_newline = auto_newline
+        self.size: int = size
+        self.letters = self.get_letters()
     
-  def get_letters(self):
-    letters = []
-    x, y = self.position
-    for char in self.text:
-      if self.auto_newline and x >= 128 - (8 * self.size):
-        x = self.position[0]
-        y += 8 * self.size
-      letters.append(Letter(char, [x, y], self.color, size=self.size))
-      x += 8 * self.size
-    return letters
+    def set_text(self, text: str):
+        """Only update letters for characters that have changed."""
+        if text != self.text:
+            self.update_letters(text)
+        self.text = text
+    
+    def set_position(self, position: list):
+        """Only update letters if the position has changed."""
+        if position != self.position:
+            self.position = position
+            self.update_positions()
+    
+    def get_width(self):
+        return sum([letter.get_width() for letter in self.letters])
 
-  def contains_points(self, points: np.ndarray):
-    mask = np.zeros(len(points), dtype=bool)
-    for letter in self.letters:
-      mask |= letter.contains_points(points)
-    return mask
+    def translate(self, dx: float, dy: float):
+        for letter in self.letters:
+            letter.translate(dx, dy)
+        self.position[0] += dx
+        self.position[1] += dy
+    
+    def get_letters(self):
+        """Initial creation of the letters based on the text and position."""
+        letters = []
+        x, y = self.position
+        for char in self.text:
+            if self.auto_newline and x >= 128 - (8 * self.size):
+                x = self.position[0]
+                y += 8 * self.size
+            letters.append(Letter(char, [x, y], self.color, size=self.size))
+            x += 8 * self.size
+        return letters
+
+    def update_letters(self, new_text: str):
+        """Update only the letters that have changed, reusing existing ones where possible."""
+        x, y = self.position
+        new_letters = []
+        for i, char in enumerate(new_text):
+            if self.auto_newline and x >= 128 - (8 * self.size):
+                x = self.position[0]
+                y += 8 * self.size
+            if i < len(self.letters):
+                # Reuse the existing letter and update its character if needed
+                self.letters[i].set_char(char)
+                new_letters.append(self.letters[i])
+            else:
+                # Create a new letter if this is beyond the current letters list
+                new_letters.append(Letter(char, [x, y], self.color, size=self.size))
+            x += 8 * self.size
+        
+        # If the new text is shorter, trim the extra letters
+        self.letters = new_letters
+
+    def update_positions(self):
+        """Update the positions of all letters based on the new starting position."""
+        x, y = self.position
+        for letter in self.letters:
+            letter.set_position([x, y])
+            x += 8 * self.size
+            if self.auto_newline and x >= 128 - (8 * self.size):
+                x = self.position[0]
+                y += 8 * self.size
+
+    def contains_points(self, points: np.ndarray):
+        mask = np.zeros(len(points), dtype=bool)
+        for letter in self.letters:
+            mask |= letter.contains_points(points)
+        return mask
 
 class Pixel:
   def __init__(self, position: list, color: list=[255, 255, 255], scale: int=1):
@@ -371,51 +408,116 @@ class ColoredBitMap:
         self.pixels.append(Pixel([x, y], pixels[i]))
 
 class BitMap:
-  def __init__(self, pixels: list, width: int, height: int, position: list=[0, 0], color: list = (255, 255, 255), scale: int=1):
-    self.pixels = pixels
-    self.position = position
-    self.width = width
-    self.height = height
-    self.scale = scale
-    self.color = color
-  
-  def contains_points(self, points: np.ndarray):
-    mask = np.zeros(len(points), dtype=bool)
+    def __init__(self, pixels: list, width: int, height: int, position: list = [0, 0], color: list = (255, 255, 255), scale: int = 1):
+        self.pixels = pixels
+        self.position = position
+        self.width = width
+        self.height = height
+        self.scale = scale
+        self.color = color
+        
+        # Cache for contains_points
+        self.cached_points = None
+        self.cached_mask = None
     
-    for i in range(len(self.pixels)):
-        x = (i % self.width) * self.scale
-        y = (i // self.width) * self.scale
-        if self.pixels[i] == 1:
-            mask |= np.logical_and(
-                np.logical_and(points[:, 0] >= x + self.position[0], points[:, 0] < x + self.position[0] + self.scale),
-                np.logical_and(points[:, 1] >= y + self.position[1], points[:, 1] < y + self.position[1] + self.scale)
-            )
+    def contains_points(self, points: np.ndarray):
+        # If cached_points is None or different, recalculate
+        if not np.array_equal(self.cached_points, points):
+            self.cached_points = points
+            self.cached_mask = self._compute_contains_points(points)
+        return self.cached_mask
     
-    return mask
+    def _compute_contains_points(self, points: np.ndarray):
+        """Computes the point containment without caching."""
+        mask = np.zeros(len(points), dtype=bool)
+        
+        for i in range(len(self.pixels)):
+            x = (i % self.width) * self.scale
+            y = (i // self.width) * self.scale
+            if self.pixels[i] == 1:
+                mask |= np.logical_and(
+                    np.logical_and(points[:, 0] >= x + self.position[0], points[:, 0] < x + self.position[0] + self.scale),
+                    np.logical_and(points[:, 1] >= y + self.position[1], points[:, 1] < y + self.position[1] + self.scale)
+                )
+        
+        return mask
 
-  def translate(self, dx: float, dy: float):
-    self.position[0] += dx
-    self.position[1] += dy
+    def translate(self, dx: float, dy: float):
+        """Translate the position of the bitmap and invalidate cache."""
+        self.position[0] += dx
+        self.position[1] += dy
+        self._invalidate_cache()
+
+    def set_bitmap(self, pixels: list, width: int, height: int):
+        """Update the bitmap with new pixel data, width, and height. Invalidate the cache."""
+        self.pixels = pixels
+        self.width = width
+        self.height = height
+        self._invalidate_cache()
+
+    def set_position(self, position: list):
+        """Set a new position for the bitmap and invalidate cache if position changes."""
+        if position != self.position:
+            self.position = position
+            self._invalidate_cache()
+
+    def _invalidate_cache(self):
+        """Invalidates the cached result of contains_points."""
+        self.cached_points = None
+        self.cached_mask = None
   
 class Letter(BitMap):
   def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
-    self.char = char
-    
-    # Make the char_mask a bitmap
-    char_mask = self.get_char_mask()
-    for i, value in enumerate(char_mask):
-      if value:
-        char_mask[i] = 1
-      else:
-        char_mask[i] = 0
-    
-    super().__init__(char_mask, 8, 8, position, color, size)
+        self.char = char
+        self.position = position
+        self.color = color
+        self.size = size
+        
+        # Initialize the character mask and the bitmap
+        self.mask_lookup = self.init_char_mask_lookup()
+        char_mask = self.get_char_mask()
+        super().__init__(char_mask, 8, 8, position, color, size)
+        
+
+  def set_char(self, new_char: str):
+        """Update the character and invalidate the cache."""
+        if new_char != self.char:
+            self.char = new_char
+            self._invalidate_cache()
+            # Update the bitmap for the new character
+            char_mask = self.get_char_mask()
+            self.set_bitmap(char_mask, 8, 8)
+  
+  def set_position(self, new_position: list):
+        """Update the position and invalidate the cache."""
+        if new_position != self.position:
+            self.position = new_position
+  
+  def set_color(self, new_color: list):
+        """Update the color and invalidate the cache."""
+        if new_color != self.color:
+            self.color = new_color
   
   def get_width(self):
     return 8 * self.scale
-  
+
   def get_char_mask(self):
-    mask_lookup = { # 8x8 mask for each letter
+    if self.char in self.mask_lookup:
+      return self.mask_lookup[self.char]
+    else:
+      return [ # Return an checkered pattern if the character is not found
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+      ]
+    
+  def init_char_mask_lookup(self):
+    return { # 8x8 mask for each letter
       ' ': [
         False,False,False,False,False,False,False,False,
         False,False,False,False,False,False,False,False,
@@ -1227,17 +1329,3 @@ class Letter(BitMap):
         False,False,False,False,False,False,False,False,
       ]
     }
-    
-    if self.char in mask_lookup:
-      return mask_lookup[self.char]
-    else:
-      return [ # Return an checkered pattern if the character is not found
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-      ]
