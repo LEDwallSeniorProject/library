@@ -1,119 +1,135 @@
 from matplotlib.path import Path
 import numpy as np
 import math
-import copy
+from skimage.draw import polygon
 
 
 class Polygon:
-  def __init__(self, vertices: list, color: tuple=(255, 255, 255)):
-    """
-    Initializes a Polygon object with the given vertices and color.
-    Parameters:
-    - vertices (list): A list of vertices that define the polygon. Must have at least 3 vertices.
-    - color (tuple, optional): The color of the polygon. Defaults to (255, 255, 255).
-    Raises:
-    - ValueError: If the number of vertices is less than 3.
-    Returns:
-    - None
-    """
-    if len(vertices) < 3:
-      raise ValueError("A polygon must have at least 3 vertices")
-    
-    self.vertices = vertices
-    self.path = Path(vertices)
-    self.color = color
-    self.center = self.get_center()
+    def __init__(self, vertices: list, color: tuple = (255, 255, 255)):
+        """
+        Initializes a Polygon object with the given vertices and color.
 
-  def contains_points(self, points):
-    return self.path.contains_points(points)
+        Parameters:
+        - vertices (list): A list of vertices that define the polygon. Must have at least 3 vertices.
+        - color (tuple, optional): The color of the polygon. Defaults to (255, 255, 255).
 
-  def translate(self, dx: float, dy: float):
-    """
-    Translate the shape by a specified distance along the x and y axes.
+        Raises:
+        - ValueError: If the number of vertices is less than 3.
+        """
+        if len(vertices) < 3:
+            raise ValueError("A polygon must have at least 3 vertices.")
 
-    Parameters:
-    - dx: The distance to translate the shape along the x axis.
-    - dy: The distance to translate the shape along the y axis.
+        self.vertices = np.array(vertices)
+        self.color = color
+        self.path = Path(self.vertices)
+        self.center = self.calculate_center()
 
-    Returns:
-    - A list of tuples representing the translated vertices of the shape.
-    """
-    translated_vertices = []
-    
-    for (x, y) in self.vertices:
-        x_translated = x + dx
-        y_translated = y + dy
-        translated_vertices.append((x_translated, y_translated))
-    
-    self.change_vertices(translated_vertices)
-    self.center = (self.center[0] + dx, self.center[1] + dy)
-  
-  def rotate(self, angle_degrees: float, center: tuple=(0, 0)):
-    """
-    Rotate the shape by a specified angle around a given center.
+    def contains_points(self, points: np.ndarray) -> np.ndarray:
+        """Check if the given points are inside the polygon."""
+        return self.path.contains_points(points)
 
-    Parameters:
-    - vertices: List of tuples representing the vertices of the shape.
-    - angle_degrees: The angle by which to rotate the shape (in degrees).
-    - center: Tuple (x, y) representing the center of rotation (default is (0, 0)).
+    def translate(self, dx: float, dy: float):
+        """
+        Translate the polygon by a specified distance along the x and y axes.
 
-    Returns:
-    - A list of tuples representing the rotated vertices of the shape.
-    """
-    # Convert angle from degrees to radians
-    angle_radians = math.radians(angle_degrees)
-    cos_angle = math.cos(angle_radians)
-    sin_angle = math.sin(angle_radians)
-    
-    rotated_vertices = []
-    
-    for (x, y) in self.vertices:
-        # Translate point to origin
-        x_translated = x - center[0]
-        y_translated = y - center[1]
-        
-        # Apply rotation
-        x_rotated = x_translated * cos_angle - y_translated * sin_angle
-        y_rotated = x_translated * sin_angle + y_translated * cos_angle
-        
-        # Translate point back
-        x_final = x_rotated + center[0]
-        y_final = y_rotated + center[1]
-        
-        rotated_vertices.append((x_final, y_final))
-    
-    self.change_vertices(rotated_vertices)
+        Parameters:
+        - dx (float): The distance to translate along the x-axis.
+        - dy (float): The distance to translate along the y-axis.
+        """
+        self.vertices += np.array([dx, dy])
+        self.update_path()
+        self.center = (self.center[0] + dx, self.center[1] + dy)
 
-  def change_vertices(self, vertices: tuple):
-    self.vertices = vertices
-    self.path = Path(vertices)
-  
-  def get_center(self):
-    n = len(self.vertices)
-    if n < 3:
-        raise ValueError("A polygon must have at least 3 vertices.")
+    def rotate(self, angle_degrees: float, center: tuple = (0, 0)):
+        """
+        Rotate the polygon by a specified angle around a given center.
 
-    # Initialize variables
-    cx, cy = 0.0, 0.0
-    area = 0.0
+        Parameters:
+        - angle_degrees (float): The angle by which to rotate the polygon (in degrees).
+        - center (tuple, optional): The center of rotation (default is (0, 0)).
+        """
+        angle_radians = np.radians(angle_degrees)
+        cos_angle = np.cos(angle_radians)
+        sin_angle = np.sin(angle_radians)
 
-    # Calculate the signed area of the polygon
-    for i in range(n):
-        x1, y1 = self.vertices[i]
-        x2, y2 = self.vertices[(i + 1) % n]
-        a = x1 * y2 - x2 * y1
-        area += a
-        cx += (x1 + x2) * a
-        cy += (y1 + y2) * a
+        # Rotate each vertex
+        rotated_vertices = []
+        for (x, y) in self.vertices:
+            # Translate point to origin
+            x_translated = x - center[0]
+            y_translated = y - center[1]
 
-    area *= 0.5
-    if area == 0:
-        raise ValueError("Area of the polygon is zero.")
-    
-    cx /= (6 * area)
-    cy /= (6 * area)
+            # Apply rotation
+            x_rotated = x_translated * cos_angle - y_translated * sin_angle
+            y_rotated = x_translated * sin_angle + y_translated * cos_angle
 
-    return (cx, cy)
+            # Translate point back
+            rotated_vertices.append((x_rotated + center[0], y_rotated + center[1]))
+
+        self.vertices = np.array(rotated_vertices)
+        self.update_path()
+
+    def update_path(self):
+        """Update the path of the polygon based on its current vertices."""
+        self.path = Path(self.vertices)
+
+    def calculate_center(self):
+        """Calculate the centroid of the polygon."""
+        n = len(self.vertices)
+        if n < 3:
+            raise ValueError("A polygon must have at least 3 vertices.")
+
+        cx, cy = 0.0, 0.0
+        area = 0.0
+
+        # Calculate the signed area and centroid
+        for i in range(n):
+            x1, y1 = self.vertices[i]
+            x2, y2 = self.vertices[(i + 1) % n]
+            a = x1 * y2 - x2 * y1
+            area += a
+            cx += (x1 + x2) * a
+            cy += (y1 + y2) * a
+
+        area *= 0.5
+        if area == 0:
+            raise ValueError("Area of the polygon is zero.")
+
+        cx /= (6 * area)
+        cy /= (6 * area)
+
+        return (cx, cy)
+
+    def get_polygon_mask(self, shape: tuple):
+        """
+        Create a binary mask for the polygon on a given image shape.
+
+        Parameters:
+        - shape (tuple): The shape of the image (height, width).
+
+        Returns:
+        - mask (numpy.ndarray): A binary mask with the polygon filled in.
+        """
+        rr, cc = polygon(self.vertices[:, 1], self.vertices[:, 0], shape=shape)
+        mask = np.zeros(shape, dtype=bool)
+        mask[rr, cc] = True
+        return mask
+
+# Example usage
+if __name__ == "__main__":
+    vertices = np.array([[100, 100], [150, 50], [200, 100], [150, 150]])
+    polygon = Polygon(vertices)
+
+    # Create a binary mask for a 500x500 image
+    mask = polygon.get_polygon_mask((500, 500))
+
+    # Visualize the mask
+    import matplotlib.pyplot as plt
+
+    plt.imshow(mask, cmap='gray')
+    plt.title("Polygon Mask")
+    plt.axis('off')
+    plt.show()
 
 def get_polygon_vertices(sides: int, radius: float=1, center: tuple=(0, 0)):
     """
