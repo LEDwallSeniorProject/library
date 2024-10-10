@@ -406,15 +406,27 @@ class ColoredBitMap:
         self.pixels.append(Pixel([x, y], pixels[i]))
 
 class BitMap:
-    def __init__(self, pixels: list, width: int, height: int, position: list=[0, 0], color: list = (255, 255, 255), scale: int=1):
+    def __init__(self, pixels: list, width: int, height: int, position: list = [0, 0], color: list = (255, 255, 255), scale: int = 1):
         self.pixels = pixels
         self.position = position
         self.width = width
         self.height = height
         self.scale = scale
         self.color = color
+        
+        # Cache for contains_points
+        self.cached_points = None
+        self.cached_mask = None
     
     def contains_points(self, points: np.ndarray):
+        # If cached_points is None or different, recalculate
+        if not np.array_equal(self.cached_points, points):
+            self.cached_points = points
+            self.cached_mask = self._compute_contains_points(points)
+        return self.cached_mask
+    
+    def _compute_contains_points(self, points: np.ndarray):
+        """Computes the point containment without caching."""
         mask = np.zeros(len(points), dtype=bool)
         
         for i in range(len(self.pixels)):
@@ -429,15 +441,28 @@ class BitMap:
         return mask
 
     def translate(self, dx: float, dy: float):
+        """Translate the position of the bitmap and invalidate cache."""
         self.position[0] += dx
         self.position[1] += dy
+        self._invalidate_cache()
 
     def set_bitmap(self, pixels: list, width: int, height: int):
-        """Update the bitmap with new pixel data, width, and height."""
+        """Update the bitmap with new pixel data, width, and height. Invalidate the cache."""
         self.pixels = pixels
         self.width = width
         self.height = height
+        self._invalidate_cache()
 
+    def set_position(self, position: list):
+        """Set a new position for the bitmap and invalidate cache if position changes."""
+        if position != self.position:
+            self.position = position
+            self._invalidate_cache()
+
+    def _invalidate_cache(self):
+        """Invalidates the cached result of contains_points."""
+        self.cached_points = None
+        self.cached_mask = None
   
 class Letter(BitMap):
   def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
