@@ -3,11 +3,11 @@ import time
 
 canvas = c.Canvas()
 thickness = 2
-triangle = s.PolygonOutline(s.get_polygon_vertices(3, 20, (32,32)), (255, 0, 0), thickness)
-square = s.PolygonOutline(s.get_polygon_vertices(4, 20, (96,32)), (0, 255, 0), thickness)
-pentagon = s.PolygonOutline(s.get_polygon_vertices(5, 20, (64,64)), (0, 0, 255), thickness)
-hexagon = s.PolygonOutline(s.get_polygon_vertices(6, 20, (32,96)), (255, 255, 0), thickness)
-heptagon = s.PolygonOutline(s.get_polygon_vertices(7, 20, (96,96)), (0, 255, 255), thickness)
+triangle = s.Polygon(s.get_polygon_vertices(3, 20, (32,32)), (255, 0, 0))
+square = s.Polygon(s.get_polygon_vertices(4, 20, (96,32)), (0, 255, 0))
+pentagon = s.Polygon(s.get_polygon_vertices(5, 20, (64,64)), (0, 0, 255))
+hexagon = s.Polygon(s.get_polygon_vertices(6, 20, (32,96)), (255, 255, 0))
+heptagon = s.Polygon(s.get_polygon_vertices(7, 20, (96,96)), (0, 255, 255))
 
 fps_text = s.Phrase("FPS: ...", [0, 0])
 
@@ -49,8 +49,7 @@ while True:
     add_start = time.perf_counter()
     canvas.add(polygon)
     add_times.append(time.perf_counter() - add_start)
-  
-  if len(frame_times) != 0:
+  if frame != 0:
     fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
   canvas.add(fps_text)
   

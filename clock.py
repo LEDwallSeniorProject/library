@@ -14,8 +14,8 @@ for i in range(12):
 while True:
     canvas.clear()
 
-    hour_hand = s.Line((64, 64), (64, 16), (255, 0, 0))
-    minute_hand = s.Line((64, 64), (64, 16), (0, 255, 0)) 
+    hour_hand = s.Line((64, 64), (64, 24), (255, 0, 0))
+    minute_hand = s.Line((64, 64), (64, 20), (0, 255, 0)) 
     second_hand = s.Line((64, 64), (64, 16), (0, 0, 255)) 
 
     now = datetime.now()
