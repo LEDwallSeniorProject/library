@@ -51,7 +51,7 @@ while True:
     add_times.append(time.perf_counter() - add_start)
   
   if len(frame_times) != 0:
-    fps_text.set_text(f"FPS: {1 / (sum(frame_times) / len(frame_times)):.2f}")
+    fps_text.set_text(f"FPS: {(1 / (sum(frame_times[-10:]) / len(frame_times[-10:])) if frame_times[-10:] else 0):.2f}")
   canvas.add(fps_text)
   
   add_all_times.append(time.perf_counter() - add_all_start)
