@@ -401,6 +401,8 @@ class Letter(BitMap):
   def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
     self.char = char
     
+    self.mask_lookup = self.init_char_mask_lookup()
+    
     # Make the char_mask a bitmap
     char_mask = self.get_char_mask()
     for i, value in enumerate(char_mask):
@@ -415,7 +417,22 @@ class Letter(BitMap):
     return 8 * self.scale
   
   def get_char_mask(self):
-    mask_lookup = { # 8x8 mask for each letter
+    if self.char in self.mask_lookup:
+      return self.mask_lookup[self.char]
+    else:
+      return [ # Return an checkered pattern if the character is not found
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+        False,True,False,True,False,True,False,True,
+        True,False,True,False,True,False,True,False,
+      ]
+    
+  def init_char_mask_lookup(self):
+    return { # 8x8 mask for each letter
       ' ': [
         False,False,False,False,False,False,False,False,
         False,False,False,False,False,False,False,False,
@@ -1227,17 +1244,3 @@ class Letter(BitMap):
         False,False,False,False,False,False,False,False,
       ]
     }
-    
-    if self.char in mask_lookup:
-      return mask_lookup[self.char]
-    else:
-      return [ # Return an checkered pattern if the character is not found
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-        False,True,False,True,False,True,False,True,
-        True,False,True,False,True,False,True,False,
-      ]

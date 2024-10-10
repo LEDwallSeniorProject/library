@@ -140,7 +140,7 @@ class Canvas:
     FPS = 30
     passed_time = time.perf_counter() - self.prev_frame_time
     if passed_time < 1/FPS:
-      #time.sleep(1/FPS - passed_time)
+      # time.sleep(1/FPS - passed_time)
       pass
     # print("FPS:", 1/(passed_time))
     
