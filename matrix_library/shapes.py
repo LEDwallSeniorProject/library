@@ -315,8 +315,9 @@ class Letter:
         self.char = char
         self.position = position
         self.color = color
-        self.size = size
-        self.font = ImageFont.truetype("arial.ttf", size * 8)  # Adjust the font and size as necessary
+        self.size = size * 8
+        self.font = ImageFont.load_default(self.size)
+        # truetype("arial.ttf", size * 8)  # Adjust the font and size as necessary
         self.image = self.create_letter_image()
 
     def create_letter_image(self):
