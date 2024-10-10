@@ -111,28 +111,12 @@ class Canvas:
         reshaped_mask = mask.reshape(self.canvas.shape[:2])
         self.canvas[reshaped_mask] = color
       return
-        
-    # if isinstance(item, s.ColoredBitMap):
-    #   for pixel in item.pixels:
-    #     mask = pixel.contains_points(self.points)
-    #     color = pixel.color
-    #     for i in range(len(self.canvas)):
-    #       for j in range(len(self.canvas[i])):
-    #         if mask[i * 128 + j]:
-    #           self.canvas[i][j] = color
-    #   return  # Early return after processing all bitmaps
 
     mask = item.contains_points(self.points)
     color = item.color
     
     reshaped_mask = mask.reshape(self.canvas.shape[:2])
     self.canvas[reshaped_mask] = color
-    
-    # Process the letter after checking it
-    # for i in range(len(self.canvas)):
-    #   for j in range(len(self.canvas[i])):
-    #       if mask[i * 128 + j]:
-    #           self.canvas[i][j] = color
 
   def draw(self):
     
@@ -159,7 +143,7 @@ class Canvas:
       # NEW fill method using pygame blit from a PIL image
       # https://www.tutorialspoint.com/how-to-convert-pil-image-into-pygame-surface-image
       frame = Image.fromarray(self.canvas)
-      resized_frame = frame.resize(size = (self.screen.get_height(),self.screen.get_width()), resample = Image.LANCZOS)
+      resized_frame = frame.resize(size = (self.screen.get_height(),self.screen.get_width()), resample = Image.NEAREST)
       pygame_surface = pygame.image.fromstring(resized_frame.tobytes(), resized_frame.size, "RGB")
       self.screen.blit(pygame_surface,(0,0))
     

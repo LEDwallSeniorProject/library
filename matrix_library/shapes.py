@@ -1,6 +1,8 @@
 from matplotlib.path import Path
 import numpy as np
 import math
+import copy
+
 
 class Polygon:
   def __init__(self, vertices: list, color: tuple=(255, 255, 255)):
@@ -466,26 +468,39 @@ class BitMap:
   
 class Letter(BitMap):
   def __init__(self, char: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1):
-    self.char = char
-    
-    self.mask_lookup = self.init_char_mask_lookup()
-    
-    # Make the char_mask a bitmap
-    char_mask = self.get_char_mask()
-    
-    super().__init__(char_mask, 8, 8, position, color, size)
+        self.char = char
+        self.position = position
+        self.color = color
+        self.size = size
+        
+        # Initialize the character mask and the bitmap
+        self.mask_lookup = self.init_char_mask_lookup()
+        char_mask = self.get_char_mask()
+        super().__init__(char_mask, 8, 8, position, color, size)
+        
+
+  def set_char(self, new_char: str):
+        """Update the character and invalidate the cache."""
+        if new_char != self.char:
+            self.char = new_char
+            self._invalidate_cache()
+            # Update the bitmap for the new character
+            char_mask = self.get_char_mask()
+            self.set_bitmap(char_mask, 8, 8)
+  
+  def set_position(self, new_position: list):
+        """Update the position and invalidate the cache."""
+        if new_position != self.position:
+            self.position = new_position
+  
+  def set_color(self, new_color: list):
+        """Update the color and invalidate the cache."""
+        if new_color != self.color:
+            self.color = new_color
   
   def get_width(self):
     return 8 * self.scale
-  
-  def set_char(self, char: str):
-        """Update the letter's character and bitmap."""
-        if char != self.char:
-            self.char = char
-            # Update the bitmap by retrieving the new mask for the character
-            new_mask = self.get_char_mask()
-            self.set_bitmap(new_mask, 8, 8)  # Update the bitmap with the new character's mask
-  
+
   def get_char_mask(self):
     if self.char in self.mask_lookup:
       return self.mask_lookup[self.char]
