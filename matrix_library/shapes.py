@@ -405,11 +405,6 @@ class Letter(BitMap):
     
     # Make the char_mask a bitmap
     char_mask = self.get_char_mask()
-    for i, value in enumerate(char_mask):
-      if value:
-        char_mask[i] = 1
-      else:
-        char_mask[i] = 0
     
     super().__init__(char_mask, 8, 8, position, color, size)
   
