@@ -203,7 +203,7 @@ class Circle:
         - dx (float): The distance to translate along the x-axis.
         - dy (float): The distance to translate along the y-axis.
         """
-        self.center += np.array([dx, dy])
+        self.center += np.array([int(dx), int(dy)])
         self.path = self.create_path()
 
     def rotate(self, angle_degrees: float, center: tuple = (0, 0)):

@@ -31,6 +31,7 @@ class Canvas:
     self.canvas[:,:] = color
     self.points = self.get_points()
     self.prev_frame_time = time.perf_counter()
+    self.frame_count = 0
 
     if debug:
       pygame.init()
@@ -166,3 +167,5 @@ class Canvas:
       self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
     
     self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
+    self.frame_count += 1
+    
