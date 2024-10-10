@@ -291,47 +291,80 @@ class CircleOutline(PolygonOutline):
     return mask
 
 class Phrase:
-  def __init__(self, text: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1, auto_newline:bool=False):
-    self.text:str = text
-    self.position:list = list(position)
-    self.color = color
-    self.auto_newline = auto_newline
-    self.size: int = size
-    self.letters = self.get_letters()
-  
-  def set_text(self, text: str):
-    self.text = text
-    self.letters = self.get_letters()
-  
-  def set_position(self, position: list):
-    self.position = position
-    self.letters = self.get_letters()
-  
-  def get_width(self):
-    return sum([letter.get_width() for letter in self.letters])
-
-  def translate(self, dx: float, dy: float):
-    for letter in self.letters:
-      letter.translate(dx, dy)
-    self.position[0] += dx
-    self.position[1] += dy
+    def __init__(self, text: str, position: list=[0, 0], color:list=[255, 255, 255], size: int=1, auto_newline:bool=False):
+        self.text: str = text
+        self.position: list = list(position)
+        self.color = color
+        self.auto_newline = auto_newline
+        self.size: int = size
+        self.letters = self.get_letters()
     
-  def get_letters(self):
-    letters = []
-    x, y = self.position
-    for char in self.text:
-      if self.auto_newline and x >= 128 - (8 * self.size):
-        x = self.position[0]
-        y += 8 * self.size
-      letters.append(Letter(char, [x, y], self.color, size=self.size))
-      x += 8 * self.size
-    return letters
+    def set_text(self, text: str):
+        # Only update letters for characters that have changed
+        if text != self.text:
+            self.update_letters(text)
+        self.text = text
+    
+    def set_position(self, position: list):
+        # Only update letters if the position has changed
+        if position != self.position:
+            self.position = position
+            self.update_positions()
+    
+    def get_width(self):
+        return sum([letter.get_width() for letter in self.letters])
 
-  def contains_points(self, points: np.ndarray):
-    mask = np.zeros(len(points), dtype=bool)
-    for letter in self.letters:
-      mask |= letter.contains_points(points)
-    return mask
+    def translate(self, dx: float, dy: float):
+        for letter in self.letters:
+            letter.translate(dx, dy)
+        self.position[0] += dx
+        self.position[1] += dy
+    
+    def get_letters(self):
+        """Initial creation of the letters based on the text and position."""
+        letters = []
+        x, y = self.position
+        for char in self.text:
+            if self.auto_newline and x >= 128 - (8 * self.size):
+                x = self.position[0]
+                y += 8 * self.size
+            letters.append(Letter(char, [x, y], self.color, size=self.size))
+            x += 8 * self.size
+        return letters
+
+    def update_letters(self, new_text: str):
+        """Update only the letters that have changed."""
+        x, y = self.position
+        new_letters = []
+        for i, char in enumerate(new_text):
+            if self.auto_newline and x >= 128 - (8 * self.size):
+                x = self.position[0]
+                y += 8 * self.size
+            # Update existing letters if they match the index, otherwise create a new one
+            if i < len(self.letters) and self.letters[i].char == char:
+                new_letters.append(self.letters[i])  # Reuse the existing letter
+            else:
+                new_letters.append(Letter(char, [x, y], self.color, size=self.size))  # New letter for changed or new char
+            x += 8 * self.size
+        
+        self.letters = new_letters
+
+    def update_positions(self):
+        """Update the positions of all letters based on the new starting position."""
+        x, y = self.position
+        for letter in self.letters:
+            letter.set_position([x, y])
+            x += 8 * self.size
+            if self.auto_newline and x >= 128 - (8 * self.size):
+                x = self.position[0]
+                y += 8 * self.size
+
+    def contains_points(self, points: np.ndarray):
+        mask = np.zeros(len(points), dtype=bool)
+        for letter in self.letters:
+            mask |= letter.contains_points(points)
+        return mask
+
 
 class Pixel:
   def __init__(self, position: list, color: list=[255, 255, 255], scale: int=1):
