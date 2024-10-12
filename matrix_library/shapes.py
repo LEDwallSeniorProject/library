@@ -433,7 +433,7 @@ class Phrase:
         letters = []
         x, y = self.position
         for char in self.text:
-            if self.auto_newline and x >= 128 - (8 * self.size):
+            if self.auto_newline and x > 128 - (8 * self.size):
                 x = self.position[0]
                 y += 8 * self.size
             letters.append(Letter(char, [x, y], self.color, size=self.size))
@@ -472,7 +472,7 @@ class Phrase:
 
     def contains_points(self, points: np.ndarray):
         mask = np.zeros(len(points), dtype=bool)
-        for letter in self.letters:
+        for i, letter in enumerate(self.letters):
             mask |= letter.contains_points(points)
         return mask
 

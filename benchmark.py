@@ -134,8 +134,9 @@ for i in range(500):
     frame_start = time.perf_counter()
     canvas.clear()
     scroll_clear_times.append(time.perf_counter() - frame_start)
-    text.translate(0, -1)
     scroll_translate_time_start = time.perf_counter()
+    text.translate(0, -1)
+    scroll_translate_times.append(time.perf_counter() - scroll_translate_time_start)
     canvas.add(text)
     scroll_add_times.append(time.perf_counter() - scroll_translate_time_start)
     scroll_draw_time_start = time.perf_counter()
@@ -161,6 +162,23 @@ print(f"Spin FPS: {spin_avg_fps:.2f}")
 print(f"Spin2 FPS: {spin2_avg_fps:.2f}")
 print(f"Bounce FPS: {bounce_avg_fps:.2f}")
 print(f"Scroll FPS: {scroll_avg_fps:.2f}")
+
+# Get Times for scrolling text
+scroll_avg_create_time = sum(scroll_create_times) / len(scroll_create_times)
+scroll_avg_clear_time = sum(scroll_clear_times) / len(scroll_clear_times)
+scroll_avg_translate_time = sum(scroll_translate_times) / len(scroll_translate_times)
+scroll_avg_add_time = sum(scroll_add_times) / len(scroll_add_times)
+scroll_avg_draw_time = sum(scroll_draw_times) / len(scroll_draw_times)
+scroll_avg_frame_time = sum(scroll_frame_times) / len(scroll_frame_times)
+
+# Print stats for scrolling text
+print(f"Scroll Create: {scroll_avg_create_time:.5f}")
+print(f"Scroll Clear: {scroll_avg_clear_time:.5f}")
+print(f"Scroll Translate: {scroll_avg_translate_time:.5f}")
+print(f"Scroll Add: {scroll_avg_add_time:.5f}")
+print(f"Scroll Draw: {scroll_avg_draw_time:.5f}")
+print(f"Scroll Frame: {scroll_avg_frame_time:.5f}")
+
 
 spin_fps_title = s.Phrase(f"Spin FPS: ", [0, 0])
 spin_fps_num = s.Phrase(f"{spin_avg_fps:.2f}", [0, 8])
