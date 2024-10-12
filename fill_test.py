@@ -26,11 +26,11 @@ height = 128
 # ]
 
 colors = [
-  (255, 0, 0), # red
-  (255,255,0), # yellow
-  (0,0,255), # blue
-  (128,0,128), # purple,
-  (128,128,128) # gray
+    (255, 0, 0),  # red
+    (255, 255, 0),  # yellow
+    (0, 0, 255),  # blue
+    (128, 0, 128),  # purple,
+    (128, 128, 128),  # gray
 ]
 index = 0
 canvas = c.Canvas()
@@ -41,5 +41,5 @@ while True:
     canvas.draw()
 
     # increment and sleep
-    index = (index+1) % len(colors)
+    index = (index + 1) % len(colors)
     time.sleep(5)

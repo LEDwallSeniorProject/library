@@ -7,16 +7,16 @@ circle = s.CircleOutline(64, (64, 64), (255, 255, 255))
 
 markers = []
 for i in range(12):
-  marker = s.Line((64, 16), (64, 8), (255, 255, 255))
-  marker.rotate(i * 30, (64, 64))
-  markers.append(marker)
+    marker = s.Line((64, 16), (64, 8), (255, 255, 255))
+    marker.rotate(i * 30, (64, 64))
+    markers.append(marker)
 
 while True:
     canvas.clear()
 
     hour_hand = s.Line((64, 64), (64, 24), (255, 0, 0))
-    minute_hand = s.Line((64, 64), (64, 20), (0, 255, 0)) 
-    second_hand = s.Line((64, 64), (64, 16), (0, 0, 255)) 
+    minute_hand = s.Line((64, 64), (64, 20), (0, 255, 0))
+    second_hand = s.Line((64, 64), (64, 16), (0, 0, 255))
 
     now = datetime.now()
     hour = now.hour
@@ -35,7 +35,7 @@ while True:
     canvas.add(circle)
 
     for marker in markers:
-      canvas.add(marker)
+        canvas.add(marker)
 
     canvas.add(hour_hand)
     canvas.add(minute_hand)
