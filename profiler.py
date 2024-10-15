@@ -19,9 +19,13 @@ def scrolling():
         canvas.draw()
 
 
+def benchmark():
+    import benchmark
+
+
 # Call your method here
-result = scrolling()
+result = benchmark()
 
 profiler.disable()
-stats = pstats.Stats(profiler).sort_stats("cumtime")
-stats.print_stats(10)  # Show top 10 time-consuming calls
+stats = pstats.Stats(profiler).sort_stats("tottime")
+stats.print_stats(20)  # Show top 10 time-consuming calls

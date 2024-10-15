@@ -90,7 +90,7 @@ class Canvas:
         Returns a 2D array of points representing a grid on a canvas.
 
         Returns:
-          numpy.ndarray: A 2D array of points, where each row represents a point (x, y).
+            numpy.ndarray: A 2D array of points, where each row represents a point (x, y).
         """
         x, y = np.meshgrid(np.arange(128), np.arange(128))
         x, y = x.flatten(), y.flatten()
@@ -101,10 +101,10 @@ class Canvas:
         Adds a letter or bitmap to the canvas.
 
         Parameters:
-          item: The item to be added.
+            item: The item to be added.
 
         Returns:
-          None
+            None
         """
 
         if isinstance(item, s.ColoredBitMap):
@@ -116,11 +116,8 @@ class Canvas:
                 self.canvas[reshaped_mask] = color
             return
 
-        mask = item.contains_points(self.points)
-        color = item.color
-
-        reshaped_mask = mask.reshape(self.canvas.shape[:2])
-        self.canvas[reshaped_mask] = color
+        mask = item.contains_points(self.points).reshape(self.canvas.shape[:2])
+        self.canvas[mask] = item.color
 
     def draw(self):
 

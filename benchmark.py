@@ -200,8 +200,8 @@ fps_texts = [
     scroll_fps_num,
 ]
 
-while True:
-    canvas.clear()
-    for fps_text in fps_texts:
-        canvas.add(fps_text)
-    canvas.draw()
+# while True:
+#     canvas.clear()
+#     for fps_text in fps_texts:
+#         canvas.add(fps_text)
+#     canvas.draw()

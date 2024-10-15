@@ -642,39 +642,20 @@ class Letter(BitMap):
         self.position = position
         self.color = color
         self.size = size
+        self.mask_cache = {}
 
         # Initialize the character mask and the bitmap
         self.mask_lookup = self.init_char_mask_lookup()
         char_mask = self.get_char_mask()
         super().__init__(char_mask, 8, 8, position, color, size)
 
-    def set_char(self, new_char: str):
-        """Update the character and invalidate the cache."""
-        if new_char != self.char:
-            self.char = new_char
-            self._invalidate_cache()
-            # Update the bitmap for the new character
-            char_mask = self.get_char_mask()
-            self.set_bitmap(char_mask, 8, 8)
-
-    def set_position(self, new_position: list):
-        """Update the position and invalidate the cache."""
-        if new_position != self.position:
-            self.position = new_position
-
-    def set_color(self, new_color: list):
-        """Update the color and invalidate the cache."""
-        if new_color != self.color:
-            self.color = new_color
-
-    def get_width(self):
-        return 8 * self.scale
-
     def get_char_mask(self):
+        if self.char in self.mask_cache:
+            return self.mask_cache[self.char]
         if self.char in self.mask_lookup:
-            return self.mask_lookup[self.char]
+            mask = self.mask_lookup[self.char]
         else:
-            return [  # Return an checkered pattern if the character is not found
+            mask = [  # Return a checkered pattern if the character is not found
                 False,
                 True,
                 False,
@@ -740,6 +721,30 @@ class Letter(BitMap):
                 True,
                 False,
             ]
+        self.mask_cache[self.char] = mask
+        return mask
+
+    def set_char(self, new_char: str):
+        """Update the character and invalidate the cache."""
+        if new_char != self.char:
+            self.char = new_char
+            self._invalidate_cache()
+            # Update the bitmap for the new character
+            char_mask = self.get_char_mask()
+            self.set_bitmap(char_mask, 8, 8)
+
+    def set_position(self, new_position: list):
+        """Update the position and invalidate the cache."""
+        if new_position != self.position:
+            self.position = new_position
+
+    def set_color(self, new_color: list):
+        """Update the color and invalidate the cache."""
+        if new_color != self.color:
+            self.color = new_color
+
+    def get_width(self):
+        return 8 * self.size
 
     def init_char_mask_lookup(self):
         return {  # 8x8 mask for each letter
