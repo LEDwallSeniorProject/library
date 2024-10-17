@@ -25,39 +25,9 @@ class Polygon:
         self.path = Path(self.vertices)
         self.center = self.calculate_center()
 
-    # def contains_points(self, points: np.ndarray) -> np.ndarray:
-    #     """Check if the given points are inside the polygon."""
-    #     return self.path.contains_points(points)
-
     def contains_points(self, points: np.ndarray) -> np.ndarray:
-        """
-        Check if the given points are inside the polygon using a mask approach.
-
-        Parameters:
-        - points (np.ndarray): An array of points with shape (n, 2) where each point is (x, y).
-        - shape (tuple): The shape of the grid (height, width) to create the mask.
-
-        Returns:
-        - np.ndarray: A boolean array indicating whether each point is inside the polygon.
-        """
-        # Generate the polygon mask for the given shape
-        shape = [128, 128]
-        mask = self.get_polygon_mask(shape)
-
-        # Extract the x and y coordinates of the points
-        x_coords = points[:, 0].astype(int)
-        y_coords = points[:, 1].astype(int)
-
-        # Ensure the points are within the bounds of the mask shape
-        inside_bounds = _numba_get_valid_points_mask(points, 0, 0, shape[1], shape[0])
-
-        # Check if the points fall inside the polygon using the mask
-        points_inside = np.zeros(len(points), dtype=bool)
-        points_inside[inside_bounds] = mask[
-            y_coords[inside_bounds], x_coords[inside_bounds]
-        ]
-
-        return points_inside
+        """Check if the given points are inside the polygon."""
+        return self.path.contains_points(points)
 
     def translate(self, dx: float, dy: float) -> None:
         """
@@ -590,6 +560,8 @@ class BitMap:
         self.cached_points_x = None
         self.cached_points_y = None
 
+        self.empty_array = np.zeros((128 * 128), dtype=bool)
+
     def _get_valid_points_mask(self, points: np.ndarray, x_min, y_min, x_max, y_max):
         return _numba_get_valid_points_mask(points, x_min, y_min, x_max, y_max)
 
@@ -603,7 +575,7 @@ class BitMap:
 
         # Check if the cached result is still valid
         if x_min > 128 or y_min > 128 or x_max < 0 or y_max < 0:
-            return np.zeros(len(points), dtype=bool)
+            return self.empty_array
 
         # Eliminate points outside the bounding box
         self._get_point_axes(points)
@@ -616,7 +588,7 @@ class BitMap:
         valid_points = points[valid_points_mask]
 
         if valid_points.size == 0:
-            return np.zeros(len(points), dtype=bool)
+            return self.empty_array
 
         # Proceed with containment checks for valid points
         result_mask = self._compute_contains_points(valid_points)
