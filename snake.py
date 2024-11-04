@@ -20,6 +20,10 @@ food_pos = [16, 8]
 
 
 while not game_over:
+
+    if snake_pos == food_pos:
+        food_spawned = False
+
     start = time.time()
     while time.time() - start < 0.25:
         if game_pad.active_keys() == [46]:
@@ -38,6 +42,11 @@ while not game_over:
         body = s.Polygon(verts, (0, 255, 0))
         body.rotate(45, ((pos[0] * 4) + 2, (pos[1] * 4) + 2))
         canvas.add(body)
+
+    if not game_over:
+        snake_body.insert(0, snake_pos.copy())
+        if snake_pos != food_pos:
+            snake_body.pop()
 
     if not food_spawned:
         food_pos = [int(time.time()) % 32, int(time.time()) % 32]
@@ -60,11 +69,6 @@ while not game_over:
 
     if snake_pos in snake_body:
         game_over = True
-
-    if not game_over:
-        snake_body.insert(0, snake_pos.copy())
-        if len(snake_body) > 3:
-            snake_body.pop()
 
     if game_over:
         canvas.clear()
