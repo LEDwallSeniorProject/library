@@ -18,8 +18,19 @@ game_over = False
 food_spawned = False
 food_pos = [16, 8]
 
+
 while not game_over:
-    time.sleep(0.25)
+    start = time.time()
+    while time.time() - start < 0.25:
+        if game_pad.active_keys() == [46]:
+            snake_dir = [0, -1]
+        elif game_pad.active_keys() == [33]:
+            snake_dir = [1, 0]
+        elif game_pad.active_keys() == [32]:
+            snake_dir = [0, 1]
+        elif game_pad.active_keys() == [18]:
+            snake_dir = [-1, 0]
+
     canvas.clear()
 
     for pos in snake_body:
@@ -61,11 +72,3 @@ while not game_over:
         break
 
     # Add your code here
-    if game_pad.active_keys() == [46]:
-        snake_dir = [0, -1]
-    elif game_pad.active_keys() == [33]:
-        snake_dir = [1, 0]
-    elif game_pad.active_keys() == [32]:
-        snake_dir = [0, 1]
-    elif game_pad.active_keys() == [18]:
-        snake_dir = [-1, 0]
