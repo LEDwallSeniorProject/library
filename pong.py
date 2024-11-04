@@ -15,7 +15,7 @@ PADDLE_SPEED = 6
 BALL_SPEED = 6
 SLEEP_TIME = 1 / 15  # Frame rate
 AI_REACTION_SPEED = 2  # Lower number = faster reaction
-VELOCITY_VARIATION_AMOUNT = 2  # Slight variation amount
+VELOCITY_VARIATION_AMOUNT = 2
 MIN_SPEED = 2
 MAX_SPEED = 6
 
