@@ -4,6 +4,9 @@ import math
 from skimage.draw import polygon, disk
 from numba import njit
 
+# Init some variables to reduce overhead
+empty_canvas = np.zeros((128 * 128), dtype=bool)
+
 
 class Polygon:
     def __init__(self, vertices: list, color: tuple = (255, 255, 255)):
@@ -560,7 +563,7 @@ class BitMap:
         self.cached_points_x = None
         self.cached_points_y = None
 
-        self.empty_array = np.zeros((128 * 128), dtype=bool)
+        # self.empty_array = empty_canvas
 
     def _get_valid_points_mask(self, points: np.ndarray, x_min, y_min, x_max, y_max):
         return _numba_get_valid_points_mask(points, x_min, y_min, x_max, y_max)
@@ -575,7 +578,7 @@ class BitMap:
 
         # Check if the cached result is still valid
         if x_min > 128 or y_min > 128 or x_max < 0 or y_max < 0:
-            return self.empty_array
+            return empty_canvas
 
         # Eliminate points outside the bounding box
         self._get_point_axes(points)
@@ -584,17 +587,23 @@ class BitMap:
             points, x_min, y_min, x_max, y_max
         )
 
-        # Only process points inside the bounding box
-        valid_points = points[valid_points_mask]
+        valid_points = self._compute_valid_points(points, valid_points_mask)
 
         if valid_points.size == 0:
-            return self.empty_array
+            return empty_canvas
 
         # Proceed with containment checks for valid points
         result_mask = self._compute_contains_points(valid_points)
 
         # Fill the original points array with results
-        final_mask = np.zeros(len(points), dtype=bool)
+        return self._compute_final_mask(valid_points_mask, result_mask)
+
+    def _compute_valid_points(self, points: np.ndarray, valid_points_mask):
+        # Only process points inside the bounding box
+        return points[valid_points_mask]
+
+    def _compute_final_mask(self, valid_points_mask, result_mask):
+        final_mask = np.zeros(len(valid_points_mask), dtype=bool)
         final_mask[valid_points_mask] = result_mask
         return final_mask
 
