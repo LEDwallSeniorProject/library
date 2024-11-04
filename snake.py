@@ -48,12 +48,14 @@ while not game_over:
         (255, 0, 0),
     )
 
+    canvas.add(food)
+
     canvas.draw()
 
     snake_pos[0] += snake_dir[0]
     snake_pos[1] += snake_dir[1]
 
-    if snake_pos[0] < 0 or snake_pos[0] >= 32 or snake_pos[1] < 0 or snake_pos[1] >= 32:
+    if snake_pos[0] < 0 or snake_pos[0] >= 33 or snake_pos[1] < 0 or snake_pos[1] >= 33:
         game_over = True
 
     if snake_pos in snake_body:
