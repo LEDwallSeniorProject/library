@@ -94,3 +94,5 @@ while True:
     for particle in particles:
         canvas.add(particle)
     canvas.draw()
+
+time.sleep(1 / 30)

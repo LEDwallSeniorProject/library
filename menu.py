@@ -36,4 +36,4 @@ while True:
     canvas.add(countdown)
 
     canvas.draw()
-    time.sleep(0)
+    time.sleep(1/30)
