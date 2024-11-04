@@ -1,7 +1,7 @@
 from matrix_library import canvas as c, shapes as s
 import time
 
-from evdec import InputDevice, categorize, ecodes
+from evdev import InputDevice, categorize, ecodes
 
 game_pad = InputDevice("/dev/input/event2")
 
@@ -27,6 +27,15 @@ while not game_over:
         body = s.Polygon(verts, (0, 255, 0))
         body.rotate(45, ((pos[0] * 4) + 2, (pos[1] * 4) + 2))
         canvas.add(body)
+
+    if not food_spawned:
+        food_pos = [int(time.time()) % 32, int(time.time()) % 32]
+        food_spawned = True
+
+    food = s.Polygon(
+        s.get_polygon_vertices(4, 2, ((food_pos[0] * 4) + 2, (food_pos[1] * 4) + 2)),
+        (255, 0, 0),
+    )
 
     canvas.draw()
 
