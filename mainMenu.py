@@ -1,6 +1,12 @@
+import os
+import subprocess
+import sys
 from matrix_library import shapes as s, canvas as c
 import time
-import keyboard
+from evdev import InputDevice, categorize, ecodes
+
+# Initialize canvas
+gamepad = InputDevice("/dev/input/event2")
 
 # Initialize the canvas
 canvas = c.Canvas()
@@ -35,6 +41,10 @@ outline_box = s.PolygonOutline(
 # Placeholder functions for actions
 def demo_action():
     print("Demo option selected!")
+    canvas.clear()
+    canvas.draw()
+    subprocess.Popen(["python", "./demoManager.py"])
+    sys.exit()
 
 def games_action():
     print("Games option selected!")
@@ -60,9 +70,9 @@ def on_key_x():
     countdown_value = 31  # Reset countdown
     countdown_expired = False  # Reset countdown expiration
 
-keyboard.on_press_key("w", lambda _: on_key_w())
-keyboard.on_press_key("s", lambda _: on_key_s())
-keyboard.on_press_key("x", lambda _: on_key_x())
+# keyboard.on_press_key("w", lambda _: on_key_w())
+# keyboard.on_press_key("s", lambda _: on_key_s())
+# keyboard.on_press_key("x", lambda _: on_key_x())
 
 # Set desired framerate
 fps = 15
@@ -77,6 +87,14 @@ while True:
     # Update only if enough time has passed since the last frame
     if elapsed_time >= frame_time:
         last_frame_time = current_time  # Reset the frame timer
+
+        # Change the 
+        if gamepad.active_keys() == [46]:
+            on_key_w()
+        if gamepad.active_keys() == [32]:
+            on_key_s()
+        if gamepad.active_keys() == [23]:
+            on_key_x()
 
         # Update the outline box vertices based on the selected option
         selected_option = options[selected_index]
