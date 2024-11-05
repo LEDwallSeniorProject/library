@@ -1,8 +1,10 @@
 from matrix_library import shapes as s, canvas as c
 import time
-import keyboard
+from evdev import InputDevice, categorize, ecodes
+
 
 # Initialize the canvas
+gamepad = InputDevice("/dev/input/event2")
 canvas = c.Canvas()
 
 # Create shapes and phrases
@@ -46,25 +48,26 @@ def games_action():
 
 actions = [demo_action, games_action]
 
-# Keyboard event handling to prevent blocking
-def on_key_w():
-    global selected_index, countdown_value
-    selected_index = (selected_index - 1) % len(options)
-    countdown_value = 30  # Reset countdown
+# # Keyboard event handling to prevent blocking
+# def on_key_w():
+    
+#     global selected_index, countdown_value
+#     selected_index = (selected_index - 1) % len(options)
+#     countdown_value = 30  # Reset countdown
 
-def on_key_s():
-    global selected_index, countdown_value
-    selected_index = (selected_index + 1) % len(options)
-    countdown_value = 30  # Reset countdown
+# def on_key_s():
+#     global selected_index, countdown_value
+#     selected_index = (selected_index + 1) % len(options)
+#     countdown_value = 30  # Reset countdown
 
-def on_key_x():
-    global countdown_value
-    actions[selected_index]()  # Call the action associated with the selected option
-    countdown_value = 30  # Reset countdown
+# def on_key_x():
+#     global countdown_value
+#     actions[selected_index]()  # Call the action associated with the selected option
+#     countdown_value = 30  # Reset countdown
 
-keyboard.on_press_key("w", lambda _: on_key_w())
-keyboard.on_press_key("s", lambda _: on_key_s())
-keyboard.on_press_key("x", lambda _: on_key_x())
+# keyboard.on_press_key("w", lambda _: on_key_w())
+# keyboard.on_press_key("s", lambda _: on_key_s())
+# keyboard.on_press_key("x", lambda _: on_key_x())
 
 # Set desired framerate
 fps = 15

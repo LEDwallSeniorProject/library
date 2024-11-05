@@ -74,7 +74,7 @@ while not game_over:
         canvas.clear()
         canvas.add(s.Phrase("GAME OVER", [32, 64], size=1))
         canvas.draw()
-        time.sleep(2)
+        time.sleep(1)
         break
 
     # Add your code here
