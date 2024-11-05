@@ -18,8 +18,9 @@ controller = s.Polygon(s.get_polygon_vertices(4, 30, (5, 150)), (0, 0, 255))
 controller2 = s.Polygon(s.get_polygon_vertices(4, 30, (20, 150)), (0, 0, 255))
 
 # Countdown setup
-countdown_value = 30  # Start countdown from 30
-countdown_display = s.Phrase(str(countdown_value), (110, 120), (255, 255, 255), size=1, auto_newline=True)
+countdown_value = 31  # Start countdown from 30
+countdown_display = s.Phrase(str(countdown_value), (110, 119), (255, 255, 255), size=1, auto_newline=True)
+countdown_expired = False  # Flag to check if countdown has expired
 
 # Menu options setup
 options = [demoheader, gamesheader]
@@ -34,33 +35,30 @@ outline_box = s.PolygonOutline(
 # Placeholder functions for actions
 def demo_action():
     print("Demo option selected!")
-    # Reset the countdown when the demo action is called
-    global countdown_value
-    countdown_value = 30
 
 def games_action():
     print("Games option selected!")
-    # Reset the countdown when the games action is called
-    global countdown_value
-    countdown_value = 30
 
 actions = [demo_action, games_action]
 
 # Keyboard event handling to prevent blocking
 def on_key_w():
-    global selected_index, countdown_value
+    global selected_index, countdown_value, countdown_expired
     selected_index = (selected_index - 1) % len(options)
-    countdown_value = 30  # Reset countdown
+    countdown_value = 31  # Reset countdown
+    countdown_expired = False  # Reset countdown expiration
 
 def on_key_s():
-    global selected_index, countdown_value
+    global selected_index, countdown_value, countdown_expired
     selected_index = (selected_index + 1) % len(options)
-    countdown_value = 30  # Reset countdown
+    countdown_value = 31  # Reset countdown
+    countdown_expired = False  # Reset countdown expiration
 
 def on_key_x():
-    global countdown_value
+    global countdown_value, countdown_expired
     actions[selected_index]()  # Call the action associated with the selected option
-    countdown_value = 30  # Reset countdown
+    countdown_value = 31  # Reset countdown
+    countdown_expired = False  # Reset countdown expiration
 
 keyboard.on_press_key("w", lambda _: on_key_w())
 keyboard.on_press_key("s", lambda _: on_key_s())
@@ -95,14 +93,20 @@ while True:
         if creatornames.get_width() + creatornames.position[0] < 0:
             creatornames.set_position([128, 100])
 
-        # Update the countdown timer
+        # Countdown Timer Logic
         if countdown_value > 0:
             countdown_value -= 1 / fps  # Decrease countdown_value based on frame rate
         else:
-            demo_action()  # Call demo action when countdown reaches zero
+            if not countdown_expired:
+                demo_action()  # Call demo action only once
+                countdown_expired = True  # Set flag to prevent repeated calls
 
-        # Update countdown display
-        countdown_display.text = str(int(countdown_value))  # Update the countdown display text
+        # Update countdown display text and position
+        countdown_display.set_text(str(int(countdown_value)))  # Update the display text
+        if countdown_value < 10:
+            countdown_display.set_position((114, 119))  # Move to the right if single-digit
+        else:
+            countdown_display.set_position((110, 119))  # Keep original position for double-digit
 
         # Draw everything
         canvas.clear()
