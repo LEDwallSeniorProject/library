@@ -1,0 +1,8 @@
+Current directory: /home/led/rpi-rgb-led-matrix/bindings/python/CalvinLEDWall/library
+Demo script path: /home/led/rpi-rgb-led-matrix/bindings/python/CalvinLEDWall/library/demoManager.py
+Python executable: /usr/bin/python3
+Exiting main menu...
+Matplotlib created a temporary config/cache directory at /tmp/matplotlib-m9fxye79 because the default path (/root/.config/matplotlib) is not a writable directory; it is highly recommended to set the MPLCONFIGDIR environment variable to a writable directory, in particular to speed up the import of Matplotlib and to better support multiprocessing.
+Bingo!
+Must run as root to be able to access /dev/mem
+Prepend 'sudo' to the command
