@@ -51,13 +51,15 @@ def demo_action():
         print(f"Python executable: {python_executable}")  # Debug print
         
         # Launch new script with full environment and in current directory
-        subprocess.Popen([python_executable, demo_script], 
+        subprocess.Popen(['sudo',  python_executable, demo_script], 
                         cwd=current_dir,
                         env=os.environ.copy(),
                         start_new_session=True)
         
         # Brief pause to ensure new process starts
-        time.sleep(0.5)
+        canvas.clear()
+        canvas.draw
+        time.sleep(0.2)
         
         # Exit this script
         print("Exiting main menu...")  # Debug print
