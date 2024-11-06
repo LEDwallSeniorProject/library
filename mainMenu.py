@@ -40,11 +40,31 @@ outline_box = s.PolygonOutline(
 
 # Placeholder functions for actions
 def demo_action():
-    print("Demo option selected!")
-    canvas.clear()
-    canvas.draw()
-    subprocess.Popen(["python", "./demoManager.py"])
-    sys.exit()
+    try:
+        # Get the path to the current directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        demo_script = os.path.join(current_dir, 'demoManager.py')
+        
+        # Check if demoManager.py exists
+        if not os.path.exists(demo_script):
+            print(f"Error: {demo_script} not found")
+            return
+            
+        # Launch demoManager.py using the same Python interpreter
+        python_executable = sys.executable
+        subprocess.Popen([python_executable, demo_script])
+        
+        # Sleep briefly to ensure new script starts
+        time.sleep(0.5)
+        
+        canvas.clear()
+        canvas.draw()
+
+        # Exit current script
+        sys.exit(0)
+        
+    except Exception as e:
+        print(f"Error switching to demo manager: {e}")
 
 def games_action():
     print("Games option selected!")
