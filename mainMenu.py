@@ -46,29 +46,35 @@ def demo_action():
         demo_script = os.path.join(current_dir, 'demoManager.py')
         python_executable = sys.executable
 
-        print(f"Current directory: {current_dir}")  # Debug print
-        print(f"Demo script path: {demo_script}")   # Debug print
-        print(f"Python executable: {python_executable}")  # Debug print
+        # print(f"Current directory: {current_dir}")
+        # print(f"Demo script path: {demo_script}")
+        # print(f"Python executable: {python_executable}")
         
-        # Launch new script with full environment and in current directory
-        subprocess.Popen(['sudo',  python_executable, demo_script], 
+        # If we're already running as root, no need for sudo
+        if os.geteuid() == 0:  # Check if we're running as root
+            cmd = [python_executable, demo_script]
+        else:
+            # If we need to escalate privileges, use sudo with -S
+            cmd = ['sudo', '-S', python_executable, demo_script]
+        
+        # Launch new script
+        subprocess.Popen(cmd, 
                         cwd=current_dir,
                         env=os.environ.copy(),
                         start_new_session=True)
         
         # Brief pause to ensure new process starts
         canvas.clear()
-        canvas.draw
-        time.sleep(0.2)
+        canvas.draw()
+        time.sleep(0.5)
         
         # Exit this script
-        print("Exiting main menu...")  # Debug print
-        time.sleep(5)
-        os._exit(0)  # Force exit
+        print("Exiting main menu...")
+        os._exit(0)
         
     except Exception as e:
         print(f"Error launching demo manager: {e}")
-        time.sleep(2)  # Keep error message visible
+        time.sleep(2)
 
 def games_action():
     print("Games option selected!")
