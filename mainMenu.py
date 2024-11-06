@@ -45,27 +45,16 @@ def demo_action():
         current_dir = os.path.dirname(os.path.abspath(__file__))
         demo_script = os.path.join(current_dir, 'demoManager.py')
         python_executable = sys.executable
-
-        # print(f"Current directory: {current_dir}")
-        # print(f"Demo script path: {demo_script}")
-        # print(f"Python executable: {python_executable}")
         
-        # If we're already running as root, no need for sudo
-        if os.geteuid() == 0:  # Check if we're running as root
-            cmd = [python_executable, demo_script]
-        else:
-            # If we need to escalate privileges, use sudo with -S
-            cmd = ['sudo', '-S', python_executable, demo_script]
-        
-        # Launch new script
-        subprocess.Popen(cmd, 
+        # Launch new script directly
+        subprocess.Popen([python_executable, demo_script], 
                         cwd=current_dir,
                         env=os.environ.copy(),
                         start_new_session=True)
         
-        # Brief pause to ensure new process starts
         canvas.clear()
         canvas.draw()
+        # Brief pause to ensure new process starts
         time.sleep(0.5)
         
         # Exit this script
