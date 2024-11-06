@@ -20,8 +20,8 @@ gamesheader = s.Phrase("Games", (0, 60), (255, 255, 255), size=3, auto_newline=T
 creatornames = s.Phrase(
     "created by Alex Ellie and Palmer", (0, 100), (255, 255, 255), size=1
 )
-controller = s.Polygon(s.get_polygon_vertices(4, 30, (5, 150)), (0, 0, 255))
-controller2 = s.Polygon(s.get_polygon_vertices(4, 30, (20, 150)), (0, 0, 255))
+# controller = s.Polygon(s.get_polygon_vertices(4, 30, (5, 150)), (0, 0, 255))
+# controller2 = s.Polygon(s.get_polygon_vertices(4, 30, (20, 150)), (0, 0, 255))
 
 # Countdown setup
 countdown_value = 31  # Start countdown from 30
@@ -41,30 +41,32 @@ outline_box = s.PolygonOutline(
 # Placeholder functions for actions
 def demo_action():
     try:
-        # Get the path to the current directory
+        # Get absolute paths
         current_dir = os.path.dirname(os.path.abspath(__file__))
         demo_script = os.path.join(current_dir, 'demoManager.py')
-        
-        # Check if demoManager.py exists
-        if not os.path.exists(demo_script):
-            print(f"Error: {demo_script} not found")
-            return
-            
-        # Launch demoManager.py using the same Python interpreter
         python_executable = sys.executable
-        subprocess.Popen([python_executable, demo_script])
+
+        print(f"Current directory: {current_dir}")  # Debug print
+        print(f"Demo script path: {demo_script}")   # Debug print
+        print(f"Python executable: {python_executable}")  # Debug print
         
-        # Sleep briefly to ensure new script starts
+        # Launch new script with full environment and in current directory
+        subprocess.Popen([python_executable, demo_script], 
+                        cwd=current_dir,
+                        env=os.environ.copy(),
+                        start_new_session=True)
+        
+        # Brief pause to ensure new process starts
         time.sleep(0.5)
         
-        canvas.clear()
-        canvas.draw()
-
-        # Exit current script
-        sys.exit(0)
+        # Exit this script
+        print("Exiting main menu...")  # Debug print
+        time.sleep(5)
+        os._exit(0)  # Force exit
         
     except Exception as e:
-        print(f"Error switching to demo manager: {e}")
+        print(f"Error launching demo manager: {e}")
+        time.sleep(2)  # Keep error message visible
 
 def games_action():
     print("Games option selected!")
@@ -154,8 +156,8 @@ while True:
         canvas.add(demoheader)
         canvas.add(gamesheader)
         canvas.add(creatornames)
-        canvas.add(controller)
-        canvas.add(controller2)
+        # canvas.add(controller)
+        # canvas.add(controller2)
         canvas.add(countdown_display)  # Draw the countdown display
         canvas.add(outline_box)  # Add the green outline box
         canvas.draw()
