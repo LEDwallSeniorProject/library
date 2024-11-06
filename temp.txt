@@ -6,3 +6,10 @@ Matplotlib created a temporary config/cache directory at /tmp/matplotlib-m9fxye7
 Bingo!
 Must run as root to be able to access /dev/mem
 Prepend 'sudo' to the command
+
+Current directory: /home/led/rpi-rgb-led-matrix/bindings/python/CalvinLEDWall/library
+Demo script path: /home/led/rpi-rgb-led-matrix/bindings/python/CalvinLEDWall/library/demoManager.py
+Python executable: /usr/bin/python3
+sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+sudo: a password is required
+Exiting main menu...
