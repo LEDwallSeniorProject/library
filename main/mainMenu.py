@@ -1,18 +1,15 @@
-import os
-import subprocess
 import sys
 from matrix_library import shapes as s, canvas as c
 import time
 from evdev import InputDevice, categorize, ecodes
 
-# Initialize canvas
 gamepad = InputDevice("/dev/input/event2")
 
 # Initialize the canvas
 canvas = c.Canvas()
 
 # Create shapes and phrases
-square = s.Polygon(s.get_polygon_vertices(4, 60, (0, 100)), (100, 200, 100))
+square = s.Polygon(s.get_polygon_vertices(4, 60, (0, 100)), (90, 200, 90))
 headerline = s.Line((3, 28), (115, 28), (255, 255, 255), thickness=1)
 menuheader = s.Phrase("MENU", (2, 0), (255, 255, 255), size=3.5, auto_newline=True)
 demoheader = s.Phrase("Demos", (0, 33), (255, 255, 255), size=3, auto_newline=True)
@@ -24,7 +21,7 @@ creatornames = s.Phrase(
 # controller2 = s.Polygon(s.get_polygon_vertices(4, 30, (20, 150)), (0, 0, 255))
 
 # Countdown setup
-countdown_value = 31  # Start countdown from 30
+countdown_value = 16  # Start countdown from 30
 countdown_display = s.Phrase(str(countdown_value), (110, 119), (255, 255, 255), size=1, auto_newline=True)
 countdown_expired = False  # Flag to check if countdown has expired
 
@@ -40,10 +37,25 @@ outline_box = s.PolygonOutline(
 
 # Placeholder functions for actions
 def demo_action():
-    print("countdown.py") 
+    print("demos")
+    canvas.clear()
+    canvas.draw()
+    del canvas
+    sys.exit(0)
 
 def games_action():
     print("pong.py")
+    canvas.clear()
+    canvas.draw()
+    del canvas
+    sys.exit(0)
+
+def shutdown():
+    print("shutdown")
+    canvas.clear()
+    canvas.draw()
+    del canvas
+    sys.exit(0)
 
 actions = [demo_action, games_action]
 
@@ -51,19 +63,19 @@ actions = [demo_action, games_action]
 def on_key_w():
     global selected_index, countdown_value, countdown_expired
     selected_index = (selected_index - 1) % len(options)
-    countdown_value = 31  # Reset countdown
+    countdown_value = 16  # Reset countdown
     countdown_expired = False  # Reset countdown expiration
 
 def on_key_s():
     global selected_index, countdown_value, countdown_expired
     selected_index = (selected_index + 1) % len(options)
-    countdown_value = 31  # Reset countdown
+    countdown_value = 16  # Reset countdown
     countdown_expired = False  # Reset countdown expiration
 
 def on_key_x():
     global countdown_value, countdown_expired
     actions[selected_index]()  # Call the action associated with the selected option
-    countdown_value = 31  # Reset countdown
+    countdown_value = 16  # Reset countdown
     countdown_expired = False  # Reset countdown expiration
 
 # keyboard.on_press_key("w", lambda _: on_key_w())
@@ -91,6 +103,8 @@ while True:
             on_key_s()
         if gamepad.active_keys() == [23]:
             on_key_x()
+        if gamepad.active_keys() == [49]:
+            shutdown()
 
         # Update the outline box vertices based on the selected option
         selected_option = options[selected_index]
@@ -109,7 +123,7 @@ while True:
 
         # Countdown Timer Logic
         if countdown_value > 0:
-            countdown_value -= 1 / fps  # Decrease countdown_value based on frame rate
+            countdown_value -= 2 / fps  # Decrease countdown_value based on frame rate
         else:
             if not countdown_expired:
                 demo_action()  # Call demo action only once

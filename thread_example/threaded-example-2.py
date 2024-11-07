@@ -20,7 +20,6 @@ class ThreadWithReturnValue(Thread):
         Thread.join(self, *args)
         return self._return
 
-
 # variables
 mainprogram = "countdown.py"
 
@@ -32,7 +31,6 @@ def run_main_program(program):
 	return result.stdout.rstrip()
 
 while True:
-	
 	# run main program
 	newrandomprogram = ""
 	print(f"Executing main countdown")

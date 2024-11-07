@@ -18,6 +18,9 @@ game_over = False
 food_spawned = False
 food_pos = [16, 8]
 
+def exit_prog():
+    canvas.delete()
+    sys.exit()
 
 while not game_over:
 
@@ -34,6 +37,8 @@ while not game_over:
             snake_dir = [0, 1]
         elif game_pad.active_keys() == [18]:
             snake_dir = [-1, 0]
+        elif game_pad.active_keys() == [24]:
+            exit_prog()
 
     canvas.clear()
 

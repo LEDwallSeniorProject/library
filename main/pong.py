@@ -10,7 +10,7 @@ canvas = c.Canvas()
 # gamepad = InputDevice("/dev/input/event2")
 
 # Constants
-WIDTH, HEIGHT = 128, 128
+WIDTH, HEIGHT = 128, 126
 BALL_RADIUS = 10
 PADDLE_WIDTH = 8
 PADDLE_HEIGHT = 40
@@ -45,6 +45,10 @@ def reset_ball():
     direction = random.choice([-1, 1])  # Random horizontal direction
     ball.velocity_x = direction * BALL_SPEED
     ball.velocity_y = BALL_SPEED * angle
+
+def exit_prog():
+    canvas.delete()
+    sys.exit()
 
 # Ball class
 class Ball(s.Circle):
@@ -113,8 +117,8 @@ class Paddle(s.Polygon):
 
 # Initialize game objects
 ball = Ball(BALL_RADIUS, (WIDTH // 2, HEIGHT // 2), (200, 0, 0), -BALL_SPEED, BALL_SPEED / 1.4)
-paddle1 = Paddle((PADDLE_WIDTH, HEIGHT // 2), PADDLE_WIDTH, PADDLE_HEIGHT, (0, 200, 0))
-paddle2 = Paddle((WIDTH - PADDLE_WIDTH, HEIGHT // 2), PADDLE_WIDTH, PADDLE_HEIGHT, (0, 200, 0))
+paddle1 = Paddle((PADDLE_WIDTH, HEIGHT // 2), PADDLE_WIDTH, PADDLE_HEIGHT, (0, 220, 0))
+paddle2 = Paddle((WIDTH - PADDLE_WIDTH, HEIGHT // 2), PADDLE_WIDTH, PADDLE_HEIGHT, (15, 120, 15))
 
 # Add initial shapes to canvas
 canvas.add(ball)
@@ -131,6 +135,8 @@ while True:
         paddle1.move(-1)
     if gamepad.active_keys() == [32]:
         paddle1.move(1)
+    if gamepad.active_keys() == [24]:
+        exit_prog()
     
     # AI movement for paddle2
     move_counter += 1
@@ -165,14 +171,3 @@ while True:
 
     # Pause for frame rate control
     time.sleep(SLEEP_TIME)
-
-
-
-
-#   File "/home/led/rpi-rgb-led-matrix/bindings/python/CalvinLEDWall/library/pong.py", line 131, in <module>
-#     if gamepad.active_keys() == [46]:
-#        ^^^^^^^^^^^^^^^^^^^^^
-#   File "/usr/lib/python3/dist-packages/evdev/device.py", line 381, in active_keys
-#     active_keys = _input.ioctl_EVIOCG_bits(self.fd, ecodes.EV_KEY)
-#                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# SystemError: <built-in function ioctl_EVIOCG_bits> returned NULL without setting an exception

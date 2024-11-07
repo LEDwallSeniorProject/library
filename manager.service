@@ -1,0 +1,31 @@
+# Save this as /etc/systemd/system/manager.service
+[Unit]
+Description=manager program
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/home/pi/library
+ExecStart=/usr/bin/python3 /home/led/rpi-rgb-led-matrix/bindings/python/CalvinLEDWall/library/main/manager.py
+Restart=always
+RestartSec=10
+# Additional security settings for root service
+ProtectSystem=full
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target
+
+# Commands to set up the service:
+sudo chmod 644 /etc/systemd/system/manager.service
+sudo systemctl daemon-reload
+sudo systemctl enable manager.service
+sudo systemctl start manager.service
+
+# To check status:
+sudo systemctl status manager.service
+
+# To view logs if there are any issues:
+# journalctl -u manager.service -n 50
