@@ -40,45 +40,7 @@ outline_box = s.PolygonOutline(
 
 # Placeholder functions for actions
 def demo_action():
-    try:
-        # Get absolute paths
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        demo_script = os.path.join(current_dir, 'demoManager.py')
-        python_executable = sys.executable
-        
-        # Prepare the sudo command
-        cmd = [
-            'sudo',
-            python_executable,
-            demo_script
-        ]
-        
-        # Set MPLCONFIGDIR to prevent matplotlib warning
-        modified_env = os.environ.copy()
-        modified_env['MPLCONFIGDIR'] = '/tmp/matplotlib-cache'
-        
-        # Launch new script with sudo privileges
-        subprocess.Popen(
-            cmd,
-            cwd=current_dir,
-            env=modified_env,
-            start_new_session=True
-        )
-        
-        # Clear and update the canvas before exiting
-        canvas.clear()
-        canvas.draw()
-        
-        # Brief pause to ensure new process starts
-        time.sleep(0.5)
-        
-        # Exit this script
-        print("Exiting main menu...")
-        os._exit(0)  # Force exit
-        
-    except Exception as e:
-        print(f"Error launching demo manager: {e}")
-        time.sleep(2)  # Keep error message visible
+    print() 
 
 def games_action():
     print("Games option selected!")
