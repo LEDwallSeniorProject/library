@@ -40,10 +40,10 @@ outline_box = s.PolygonOutline(
 
 # Placeholder functions for actions
 def demo_action():
-    print() 
+    print("countdown.py") 
 
 def games_action():
-    print("Games option selected!")
+    print("pong.py")
 
 actions = [demo_action, games_action]
 
