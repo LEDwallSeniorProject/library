@@ -1,5 +1,5 @@
 import numpy as np
-from matrix_library import shapes as s
+from matrix_library import shapes as s, controller as ctrl
 import time
 from PIL import Image
 
