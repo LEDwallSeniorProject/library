@@ -13,14 +13,14 @@
 
 import time
 
-try:
+# Detection of Platform for import
+if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
     from evdev import InputDevice, categorize, ecodes
     import asyncio
-
     mode = "board"
-except:
+ 
+else:
     import pygame
-
     mode = "debug"
 
 
