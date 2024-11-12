@@ -13,6 +13,7 @@
 
 import time
 import re
+import platform
 
 # Detection of Platform for import
 if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
