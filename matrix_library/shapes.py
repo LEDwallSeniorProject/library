@@ -2,7 +2,6 @@ from matplotlib.path import Path
 import numpy as np
 import math
 from skimage.draw import polygon, disk
-from numba import njit
 
 # Init some variables to reduce overhead
 empty_canvas = np.zeros((128 * 128), dtype=bool)
@@ -527,18 +526,6 @@ class ColoredBitMap:
                 self.pixels.append(Pixel([x, y], pixels[i]))
 
 
-# For the BitMap class
-# Uses a just in time (JIT) compiled function to check if points are within the bounding box of the bitmap.
-@njit
-def _numba_get_valid_points_mask(points, x_min, y_min, x_max, y_max):
-    return (
-        (points[:, 0] >= x_min)
-        & (points[:, 0] < x_max)
-        & (points[:, 1] >= y_min)
-        & (points[:, 1] < y_max)
-    )
-
-
 class BitMap:
     def __init__(
         self,
@@ -566,7 +553,12 @@ class BitMap:
         # self.empty_array = empty_canvas
 
     def _get_valid_points_mask(self, points: np.ndarray, x_min, y_min, x_max, y_max):
-        return _numba_get_valid_points_mask(points, x_min, y_min, x_max, y_max)
+        return (
+        (points[:, 0] >= x_min)
+        & (points[:, 0] < x_max)
+        & (points[:, 1] >= y_min)
+        & (points[:, 1] < y_max)
+    )
 
     def contains_points(self, points: np.ndarray):
 
