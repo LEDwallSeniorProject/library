@@ -6,13 +6,13 @@ import re
 import time
 
 # Detection of Platform for import
-if re.search("armv",platform.machine()) and re.search("led",platform.node()):
+if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
     import zmq
 else:
     import pygame
 
 class Canvas:
-    def __init__(self, backgroundcolor=(0, 0, 0), fps=30, renderMode=""):
+    def __init__(self, backgroundcolor=(0, 0, 0), fps=30, limitFps=True, renderMode=""):
         """
         Initializes a Canvas object with the specified color.
 
@@ -34,13 +34,14 @@ class Canvas:
         self.prev_frame_time = time.perf_counter()
         self.frame_count = 0
         self.fps = fps
+        self.limitFps = limitFps
 
         # deal with a blank renderMode; trying to auto-detect the 
         # specific raspberry PI LED Wall we have, otherwise fall back to pygame
         if renderMode == "":
 
             # first, detect if I'm on a pi/LEDwall system
-            if re.search("armv",platform.machine()) and re.search("led",platform.node()):
+            if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
                 self.render = "zmq"
             else:
                 self.render = "pygame"
@@ -72,7 +73,8 @@ class Canvas:
             options.pixel_mapper_config = "U-mapper"
             options.gpio_slowdown = 3
             options.drop_privileges = True
-            options.limit_refresh_rate_hz = 60
+            options.limit_refresh_rate_hz = 120
+            options.pwm_bits = 6
             options.show_refresh_rate = False
             self.matrix = m.RGBMatrix(options=options)
             self.frame_canvas = self.matrix.CreateFrameCanvas()
@@ -152,9 +154,10 @@ class Canvas:
     def draw(self):
 
         # # Limit the frame rate to a specified value
-        frame_time = 1 / self.fps
-        while(time.perf_counter() - self.prev_frame_time <= frame_time):
-            time.sleep(1/self.fps/20)  # sleep for a portion of the frame time
+        if self.limitFps:
+            frame_time = 1 / self.fps
+            while((time.perf_counter() - self.prev_frame_time) < frame_time):
+                time.sleep(1/self.fps/20)  # sleep for a portion of the frame time
 
         # # # # # # ## 
         # START - Rendering functions
@@ -196,7 +199,7 @@ class Canvas:
             frame = Image.fromarray(self.canvas)
 
             # Convert the image to RGBA mode and rawbytestring
-            img = img.convert("RGBA")
+            img = frame.convert("RGBA")
             rawimage = img.tobytes()
 
             # # send the request and receive back a "blank" response
