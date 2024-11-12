@@ -5,6 +5,11 @@ import numpy as np
 import re
 import time
 
+# Detection of Platform for import
+if re.search("armv",platform.machine()) and re.search("led",platform.node()):
+    import zmq
+else:
+    import pygame
 
 class Canvas:
     def __init__(self, backgroundcolor=(0, 0, 0), fps=30, renderMode=""):
@@ -35,7 +40,7 @@ class Canvas:
         if renderMode == "":
 
             # first, detect if I'm on a pi/LEDwall system
-            if re.search("amrv",platform.machine()) and re.search("led",platform.node()):
+            if re.search("armv",platform.machine()) and re.search("led",platform.node()):
                 self.render = "zmq"
             else:
                 self.render = "pygame"
@@ -45,7 +50,6 @@ class Canvas:
 
         # specific python module imports and setup depending on rendering mode
         if self.render == "zmq":
-            import zmq
 
             # Create the ZMQ connection
             self.context = zmq.Context()
@@ -74,7 +78,7 @@ class Canvas:
             self.frame_canvas = self.matrix.CreateFrameCanvas()
     
         elif self.render == "pygame":
-            import pygame
+
 
             # Initialize pygame
             pygame.init()
@@ -148,9 +152,9 @@ class Canvas:
     def draw(self):
 
         # # Limit the frame rate to a specified value
-        passed_time = time.perf_counter() - self.prev_frame_time
-        while(passed_time < 1 / self.fps):
-            time.sleep(1/self.fps/10)  # sleep for 1/10 of the frame time
+        frame_time = 1 / self.fps
+        while(time.perf_counter() - self.prev_frame_time <= frame_time):
+            time.sleep(1/self.fps/20)  # sleep for a portion of the frame time
 
         # # # # # # ## 
         # START - Rendering functions
@@ -197,8 +201,8 @@ class Canvas:
 
             # # send the request and receive back a "blank" response
             # # both of these are blocking
-            socket.send(rawimage)
-            message = socket.recv()
+            self.socket.send(rawimage)
+            message = self.socket.recv()
 
         # END - Rendering functions
         # # # # # # ## 
