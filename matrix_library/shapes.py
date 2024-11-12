@@ -2,6 +2,10 @@ from matplotlib.path import Path
 import numpy as np
 import math
 from skimage.draw import polygon, disk
+from numba import njit
+
+# Init some variables to reduce overhead
+empty_canvas = np.zeros((128 * 128), dtype=bool)
 
 
 class Polygon:
@@ -523,6 +527,18 @@ class ColoredBitMap:
                 self.pixels.append(Pixel([x, y], pixels[i]))
 
 
+# For the BitMap class
+# Uses a just in time (JIT) compiled function to check if points are within the bounding box of the bitmap.
+@njit
+def _numba_get_valid_points_mask(points, x_min, y_min, x_max, y_max):
+    return (
+        (points[:, 0] >= x_min)
+        & (points[:, 0] < x_max)
+        & (points[:, 1] >= y_min)
+        & (points[:, 1] < y_max)
+    )
+
+
 class BitMap:
     def __init__(
         self,
@@ -544,32 +560,50 @@ class BitMap:
         self.cached_points = None
         self.cached_mask = None
 
+        self.cached_points_x = None
+        self.cached_points_y = None
+
+        # self.empty_array = empty_canvas
+
+    def _get_valid_points_mask(self, points: np.ndarray, x_min, y_min, x_max, y_max):
+        return _numba_get_valid_points_mask(points, x_min, y_min, x_max, y_max)
+
     def contains_points(self, points: np.ndarray):
+
         # Check bounding box first to eliminate points that are clearly outside
         x_min = self.position[0]
         y_min = self.position[1]
         x_max = x_min + self.width * self.scale
         y_max = y_min + self.height * self.scale
 
+        # Check if the cached result is still valid
+        if x_min > 128 or y_min > 128 or x_max < 0 or y_max < 0:
+            return empty_canvas
+
         # Eliminate points outside the bounding box
-        valid_points_mask = (
-            (points[:, 0] >= x_min)
-            & (points[:, 0] < x_max)
-            & (points[:, 1] >= y_min)
-            & (points[:, 1] < y_max)
+        self._get_point_axes(points)
+
+        valid_points_mask = self._get_valid_points_mask(
+            points, x_min, y_min, x_max, y_max
         )
 
-        # Only process points inside the bounding box
-        valid_points = points[valid_points_mask]
+        valid_points = self._compute_valid_points(points, valid_points_mask)
 
         if valid_points.size == 0:
-            return np.zeros(len(points), dtype=bool)
+            return empty_canvas
 
         # Proceed with containment checks for valid points
         result_mask = self._compute_contains_points(valid_points)
 
         # Fill the original points array with results
-        final_mask = np.zeros(len(points), dtype=bool)
+        return self._compute_final_mask(valid_points_mask, result_mask)
+
+    def _compute_valid_points(self, points: np.ndarray, valid_points_mask):
+        # Only process points inside the bounding box
+        return points[valid_points_mask]
+
+    def _compute_final_mask(self, valid_points_mask, result_mask):
+        final_mask = np.zeros(len(valid_points_mask), dtype=bool)
         final_mask[valid_points_mask] = result_mask
         return final_mask
 
@@ -587,14 +621,19 @@ class BitMap:
         y_max = y_min + self.scale
 
         # Check if points fall within any of the pixel bounding boxes
+
         mask = np.any(
-            (points[:, 0] >= x_min)
-            & (points[:, 0] < x_max)
-            & (points[:, 1] >= y_min)
-            & (points[:, 1] < y_max),
+            self._get_valid_points_mask(points, x_min, y_min, x_max, y_max),
             axis=0,
         )
         return mask
+
+    def _get_point_axes(self, points: np.ndarray):
+        if self.cached_points_x is None or self.cached_points_y is None:
+            self.cached_points_x = points[:, 0]
+            self.cached_points_y = points[:, 1]
+
+        return self.cached_points_x, self.cached_points_y
 
     def translate(self, dx: float, dy: float):
         """Translate the position of the bitmap and invalidate cache."""
@@ -619,6 +658,8 @@ class BitMap:
         """Invalidates the cached result of contains_points."""
         self.cached_points = None
         self.cached_mask = None
+        self.cached_points_x = None
+        self.cached_points_y = None
 
     def _bbox_intersects(self, bbox1, bbox2):
         """Check if two bounding boxes intersect."""
