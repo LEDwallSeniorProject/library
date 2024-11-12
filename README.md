@@ -5,23 +5,28 @@
 -----------
 
 Installation requirements:
-Python 3.8.x to 3.11.x
+- Python 3.8.x to 3.11.x
+- Git
 
-1. Make a new virtual environment:
+How to install:
+
+Make a new virtual environment:
    
 > python3 -m venv calvincsledvenv
 
-3. Activate the environment
+Activate the environment
 
-> (Windows) . calvincsledvenv\Scripts\activate
+> (Windows) calvincsledvenv\Scripts\activate
+
+> (Windows Powershell) . calvincsledvenv/Scripts/activate
 
 > (Linux/Mac) source calvincsledvenv\bin\activate
 
-4. Install the library
+Install the library
 
 > pip install git+https://github.com/LEDwallSeniorProject/library.git
 
-5. Test the library
+Test the library
 
 > python3
 
