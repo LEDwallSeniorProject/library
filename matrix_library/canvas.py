@@ -1,10 +1,13 @@
 from matrix_library import shapes as s
 from PIL import Image
+import platform
 import numpy as np
+import re
 import time
 
+
 class Canvas:
-    def __init__(self, backgroundcolor=(0, 0, 0), renderMode="zmq"):
+    def __init__(self, backgroundcolor=(0, 0, 0), fps=30, renderMode=""):
         """
         Initializes a Canvas object with the specified color.
 
@@ -25,8 +28,23 @@ class Canvas:
         self.points = self.get_points()
         self.prev_frame_time = time.perf_counter()
         self.frame_count = 0
+        self.fps = fps
 
-        if renderMode == "zmq":
+        # deal with a blank renderMode; trying to auto-detect the 
+        # specific raspberry PI LED Wall we have, otherwise fall back to pygame
+        if renderMode == "":
+
+            # first, detect if I'm on a pi/LEDwall system
+            if re.search("amrv",platform.machine()) and re.search("led",platform.node()):
+                self.render = "zmq"
+            else:
+                self.render = "pygame"
+        
+        else:
+            self.render = renderMode
+
+        # specific python module imports and setup depending on rendering mode
+        if self.render == "zmq":
             import zmq
 
             # Create the ZMQ connection
@@ -37,15 +55,7 @@ class Canvas:
             self.socket = self.context.socket(zmq.REQ)
             self.socket.connect("tcp://localhost:55000")
 
-        if renderMode == "pygame":
-            import pygame
-
-            # Initialize pygame
-            pygame.init()
-            self.screen = pygame.display.set_mode((640, 640))
-            pygame.display.set_caption("Canvas")
-
-        if renderMode == "led":
+        elif self.render == "led":
             import rgbmatrix as m
 
             # Set up the options for the matrix
@@ -62,6 +72,18 @@ class Canvas:
             options.show_refresh_rate = False
             self.matrix = m.RGBMatrix(options=options)
             self.frame_canvas = self.matrix.CreateFrameCanvas()
+    
+        elif self.render == "pygame":
+            import pygame
+
+            # Initialize pygame
+            pygame.init()
+            self.screen = pygame.display.set_mode((640, 640))
+            pygame.display.set_caption("Canvas")
+        
+        else:
+            print("Unsupported renderMode given.")
+            exit(1)
 
     def clear(self):
         """
@@ -126,18 +148,15 @@ class Canvas:
     def draw(self):
 
         # # Limit the frame rate to a specified value
-        # FPS = 30
-        # passed_time = time.perf_counter() - self.prev_frame_time
-        # if passed_time < 1 / FPS:
-        #     # time.sleep(1/FPS - passed_time)
-        #     pass
-        # # print("FPS:", 1/(passed_time))
+        passed_time = time.perf_counter() - self.prev_frame_time
+        while(passed_time < 1 / self.fps):
+            time.sleep(1/self.fps/10)  # sleep for 1/10 of the frame time
 
         # # # # # # ## 
         # START - Rendering functions
 
         # Rendering for PyGame
-        if renderMode == "pygame":
+        if self.render == "pygame":
             # Check for the close event
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -157,7 +176,7 @@ class Canvas:
             pygame.display.flip()
 
         # Rendering for direct LED Matrix
-        if renderMode == "led":
+        if self.render == "led":
 
             # convert the numpy array to a PIL image
             frame = Image.fromarray(self.canvas)
@@ -167,7 +186,7 @@ class Canvas:
             self.frame_canvas = self.matrix.SwapOnVSync(self.frame_canvas)
         
         # Rendering for ZMQ
-        if renderMode == "zmq":
+        if self.render == "zmq":
             
             # convert the numpy array to a PIL image
             frame = Image.fromarray(self.canvas)
@@ -185,7 +204,5 @@ class Canvas:
         # # # # # # ## 
 
         # keep track of frame timing for FPS limiter
-        # self.prev_frame_time = (
-        #     time.perf_counter()
-        # )  # Track the time at which the frame was drawn
-        # self.frame_count += 1
+        self.prev_frame_time = time.perf_counter() # Track the time at which the frame was drawn
+        self.frame_count += 1
