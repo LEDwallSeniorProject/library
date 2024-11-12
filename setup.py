@@ -10,6 +10,7 @@ setup(
     author_email='cpsc-admin@calvin.edu',
     url='https://github.com/LEDwallSeniorProject/library',
     install_requires=[
-        'numpy','matplotlib','pillow','pygame','scikit-image','wheel'
+        'numpy','matplotlib','pillow','pygame','scikit-image'
     ],
+    setup_requires=['wheel'],
 )
