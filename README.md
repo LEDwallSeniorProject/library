@@ -39,4 +39,4 @@ pygame 2.6.1 (SDL 2.28.4, Python 3.8.10)
 Hello from the pygame community. https://www.pygame.org/contribute.html
 
 -----------
-See the examples folder for examples on using this library.
+See the examples folder for examples on using this library. Documentation is available at https://docs.google.com/document/d/1PBP75Na3zX3ePtl01ZUX5jHd2fPjrebl3Tx6YcjX_gc/edit?usp=sharing
