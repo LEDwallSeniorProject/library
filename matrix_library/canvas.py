@@ -6,15 +6,18 @@ import platform
 import numpy as np
 import re
 import time
+import os
+import sys
 
 # Detection of Platform for import
 if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
     import zmq
 else:
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
     import pygame
 
 class Canvas:
-    def __init__(self, backgroundcolor=(0, 0, 0), fps=30, limitFps=True, renderMode=""):
+    def __init__(self, backgroundcolor=(0, 0, 0), fps=30, limitFps=True, renderMode="", zmqRenderTarget="localhost"):
         """
         Initializes a Canvas object with the specified color.
 
@@ -37,6 +40,7 @@ class Canvas:
         self.frame_count = 0
         self.fps = fps
         self.limitFps = limitFps
+        self.zmqRenderTarget = zmqRenderTarget
 
         # deal with a blank renderMode; trying to auto-detect the 
         # specific raspberry PI LED Wall we have, otherwise fall back to pygame
@@ -54,13 +58,16 @@ class Canvas:
         # specific python module imports and setup depending on rendering mode
         if self.render == "zmq":
 
+            if "zmq" not in sys.modules:
+                import zmq
+
             # Create the ZMQ connection
             self.context = zmq.Context()
 
             #  Socket to talk to server
             #print("Connecting to LED ZMQ server…")
             self.socket = self.context.socket(zmq.REQ)
-            self.socket.connect("tcp://localhost:55000")
+            self.socket.connect(f"tcp://{self.zmqRenderTarget}:55000")
 
         elif self.render == "led":
             import rgbmatrix as m
