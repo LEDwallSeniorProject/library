@@ -3,6 +3,11 @@ from matrix_library import utils
 import numpy as np
 import math
 from skimage.draw import polygon, disk
+import os
+
+# load pygame
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame
 
 # Init some variables to reduce overhead
 empty_canvas = np.zeros((128 * 128), dtype=bool)
@@ -501,6 +506,9 @@ class Pixel:
         self.position[0] += dx
         self.position[1] += dy
 
+    def __str__(self):
+        return f"[{self.position[0]},{self.position[1]}] -> ({self.color[0]},{self.color[1]},{self.color[2]})"
+
 
 class ColoredBitMap:
     def __init__(
@@ -662,6 +670,33 @@ class BitMap:
             x1_max < x2_min or x1_min > x2_max or y1_max < y2_min or y1_min > y2_max
         )
 
+class Image(ColoredBitMap):
+    def __init__(self, width: int, height: int, position: list = [0, 0], scale: int = 1):
+        super().__init__(pixels=[], width=width, height=height, position=position, scale=scale)
+
+    def loadfile(self, filename: str):
+        if os.path.exists(filename):
+            imgsurface = pygame.image.load(filename)
+
+            # check to make sure size matches
+            if(imgsurface.get_height() != self.height or imgsurface.get_width() != self.width):
+                pygame.transform.scale(imgsurface,(self.width,self.height))
+            
+            # Loop through and make a bitmap of pixels
+            for x in range(0,self.width):
+                for y in range(0,self.height):
+                    self.pixels.append(Pixel([x,y], color=tuple(imgsurface.get_at((x,y))[0:3])))
+
+        else:
+            print(f"File {filename} does not exist. Try again.")
+    
+    def loadpixels(self, pixels: list):
+        for i in range(len(pixels)):
+            if pixels[i] != [] and pixels[i] != [None]:  # Skip empty pixels
+                x = (i % self.width) * self.scale
+                y = (i // self.height) * self.scale
+
+                self.pixels.append(Pixel([x, y], color=pixels[i]))
 
 class Letter(BitMap):
     def __init__(
