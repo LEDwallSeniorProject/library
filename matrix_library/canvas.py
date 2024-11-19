@@ -9,12 +9,13 @@ import time
 import os
 import sys
 
+# load pygame
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame
+
 # Detection of Platform for import
 if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
     import zmq
-else:
-    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-    import pygame
 
 class Canvas:
     def __init__(self, backgroundcolor=(0, 0, 0), fps=30, limitFps=True, renderMode="", zmqRenderTarget="localhost", zmqRenderPort="55000"):
@@ -68,7 +69,7 @@ class Canvas:
             #  Socket to talk to server
             #print("Connecting to LED ZMQ server…")
             self.socket = self.context.socket(zmq.REQ)
-            self.socket.connect(f"tcp://{self.zmqRenderTarget}:{self.zmqRenderTarget}")
+            self.socket.connect(f"tcp://{self.zmqRenderTarget}:{self.zmqRenderPort}")
 
         elif self.render == "led":
             import rgbmatrix as m
@@ -149,7 +150,7 @@ class Canvas:
             None
         """
 
-        if isinstance(item, s.ColoredBitMap):
+        if isinstance(item, s.ColoredBitMap) or isinstance(item, s.Image):
             for pixel in item.pixels:
                 mask = pixel.contains_points(self.points)
                 color = pixel.color
