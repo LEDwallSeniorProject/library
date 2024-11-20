@@ -14,21 +14,29 @@
 import time
 import re
 import platform
+from threading import Thread
 
+# TODO: change this to make it like the others
 # Detection of Platform for import
-if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
+if re.search("armv|aarch64", platform.machine()) and re.search(
+    "csledpi", platform.node()
+):
     from evdev import InputDevice, categorize, ecodes
     import asyncio
+
     mode = "board"
- 
+
 else:
     import pygame
+    import keyboard
+
     mode = "debug"
 
 
 class Controller:
     def __init__(self):
         self.function_map = {}
+        self.threads = []
 
         if mode == "board":
             while self.gamepad is None:
@@ -51,20 +59,39 @@ class Controller:
             }
         else:
             self.button_map = {
-                "LB": pygame.K_q,
-                "RB": pygame.K_e,
-                "UP": pygame.K_w,
-                "DOWN": pygame.K_s,
-                "LEFT": pygame.K_a,
-                "RIGHT": pygame.K_d,
-                "A": pygame.K_l,
-                "B": pygame.K_k,
-                "Y": pygame.K_j,
-                "X": pygame.K_i,
+                "LB": "q",
+                "RB": "e",
+                "UP": "w",
+                "DOWN": "s",
+                "LEFT": "a",
+                "RIGHT": "d",
+                "A": "l",
+                "B": "k",
+                "Y": "j",
+                "X": "i",
             }
 
     def add_function(self, button, function):
-        self.function_map[self.button_map[button]] = function
+        if mode == "board":
+            t = Thread(target=self.worker, args=(button, function), daemon=True)
+            t.start()
+            print(f"Thread started: {button}")
+            self.threads.append(t)
+        else:
+            print(f"Key: {self.button_map[button]}")
+            keyboard.add_hotkey(self.button_map[button], function)
+
+    def worker(self, button, function):
+        while True:
+            for event in self.gamepad.read_loop():
+                if event.type == ecodes.EV_KEY:
+                    key_event = categorize(event)
+                    if (
+                        key_event.keycode == self.button_map[button]
+                        and key_event.keystate == key_event.key_down
+                    ):
+                        print("running function")
+                        function()
 
     def check_key_presses(self):
         if mode == "board":
