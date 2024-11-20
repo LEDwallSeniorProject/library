@@ -12,10 +12,12 @@
 #     ---                ---
 
 import time
+from threading import Thread
 
+
+# TODO: change this to make it like the others
 try:
     from evdev import InputDevice, categorize, ecodes
-    import asyncio
 
     mode = "board"
 except:
@@ -27,6 +29,7 @@ except:
 class Controller:
     def __init__(self):
         self.function_map = {}
+        self.threads = []
 
         if mode == "board":
             while self.gamepad is None:
@@ -63,6 +66,36 @@ class Controller:
 
     def add_function(self, button, function):
         self.function_map[self.button_map[button]] = function
+
+    def add_functions(self, button, function):
+        t = Thread(target=self.worker, args=(button, function))
+        t.start()
+        self.threads.append(t)
+
+    def worker(self, button, function):
+        while True:
+            if mode == "board":
+                for event in self.gamepad.read_loop():
+                    if (
+                        event.type == ecodes.EV_KEY
+                        and event.value == 1
+                        and event.code == self.button_map[button]
+                    ):
+                        try:
+                            function()
+                        except:
+                            print("There was an error in the function that you passed")
+
+            else:
+                for event in pygame.event.get():
+                    if (
+                        event.type == pygame.KEYDOWN
+                        and event.key == self.button_map[button]
+                    ):
+                        try:
+                            function()
+                        except:
+                            print("There was an error in the function that you passed")
 
     def check_key_presses(self):
         if mode == "board":

@@ -7,6 +7,7 @@ from skimage.draw import polygon, disk
 # Init some variables to reduce overhead
 empty_canvas = np.zeros((128 * 128), dtype=bool)
 
+
 class Polygon:
     def __init__(self, vertices: list, color: tuple = (255, 255, 255)):
         """
@@ -554,11 +555,11 @@ class BitMap:
 
     def _get_valid_points_mask(self, points: np.ndarray, x_min, y_min, x_max, y_max):
         return (
-        (points[:, 0] >= x_min)
-        & (points[:, 0] < x_max)
-        & (points[:, 1] >= y_min)
-        & (points[:, 1] < y_max)
-    )
+            (points[:, 0] >= x_min)
+            & (points[:, 0] < x_max)
+            & (points[:, 1] >= y_min)
+            & (points[:, 1] < y_max)
+        )
 
     def contains_points(self, points: np.ndarray):
 
@@ -673,15 +674,71 @@ class Letter(BitMap):
     ):
         self.char = ""
         self.mask = [  # Default mask
-                    False, True, False, True, False, True, False, True, 
-                    True, False, True, False, True, False, True, False,
-                    False, True, False, True, False, True, False, True,
-                    True, False, True, False, True, False, True, False,
-                    False, True, False, True, False, True, False, True,
-                    True, False, True, False, True, False, True, False,
-                    False, True, False, True, False, True, False, True,
-                    True, False, True, False, True, False, True, False,
-                ]
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+            True,
+            False,
+        ]
         self.position = position
         self.color = color
         self.size = size
@@ -696,20 +753,23 @@ class Letter(BitMap):
         """Update the character and invalidate the cache."""
         if new_char != self.char:
             self.char = new_char
-        
+
             if self.char in utils.char_mask:
                 self.mask = utils.char_mask[self.char]
             else:
-                self.mask = [  # Return a checkered pattern if the character is not found
-                    False, True, False, True, False, True, False, True, 
-                    True, False, True, False, True, False, True, False,
-                    False, True, False, True, False, True, False, True,
-                    True, False, True, False, True, False, True, False,
-                    False, True, False, True, False, True, False, True,
-                    True, False, True, False, True, False, True, False,
-                    False, True, False, True, False, True, False, True,
-                    True, False, True, False, True, False, True, False,
-                ]
+                self.mask = [
+                    ((i + j) % 2 == 1) for i in range(8) for j in range(8)
+                ]  # Return a checkered pattern if the character is not found
+                # self.mask = [  # Return a checkered pattern if the character is not found
+                #     False, True, False, True, False, True, False, True,
+                #     True, False, True, False, True, False, True, False,
+                #     False, True, False, True, False, True, False, True,
+                #     True, False, True, False, True, False, True, False,
+                #     False, True, False, True, False, True, False, True,
+                #     True, False, True, False, True, False, True, False,
+                #     False, True, False, True, False, True, False, True,
+                #     True, False, True, False, True, False, True, False,
+                # ]
 
             # run_setbitmap
             self.set_bitmap(self.mask, 8, 8)
