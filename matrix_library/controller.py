@@ -40,7 +40,7 @@ class Controller:
         if mode == "board":
             while self.gamepad is None:
                 try:
-                    self.gamepad = InputDevice("/dev/input/event2")
+                    self.gamepad = InputDevice("/dev/input/event1")
                 except:
                     print("No gamepad found")
                     time.sleep(1)
