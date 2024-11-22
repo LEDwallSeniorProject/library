@@ -22,7 +22,6 @@ if re.search("armv|aarch64", platform.machine()) and re.search(
     "csledpi", platform.node()
 ):
     from evdev import InputDevice, categorize, ecodes
-    import asyncio
 
     mode = "board"
 
@@ -92,22 +91,3 @@ class Controller:
                     ):
                         print("running function")
                         function()
-
-    def check_key_presses(self):
-        if mode == "board":
-            for event in self.gamepad.read_loop():
-                if event.type == ecodes.EV_KEY:
-                    if event.value == 1:
-                        if event.code in self.button_map.values():
-                            try:
-                                self.function_map[event.code]()
-                            except:
-                                pass
-        else:
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key in self.button_map.values():
-                        try:
-                            self.function_map[event.key]()
-                        except:
-                            pass
