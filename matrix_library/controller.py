@@ -22,6 +22,7 @@ if re.search("armv|aarch64", platform.machine()) and re.search(
     "csledpi", platform.node()
 ):
     from evdev import InputDevice, categorize, ecodes
+    import asyncio
 
     mode = "board"
 
@@ -72,10 +73,12 @@ class Controller:
 
     def add_function(self, button, function):
         if mode == "board":
-            t = Thread(target=self.worker, args=(button, function), daemon=True)
-            t.start()
-            print(f"Thread started: {button}")
-            self.threads.append(t)
+            # t = Thread(target=self.worker, args=(button, function), daemon=True)
+            # t.start()
+            # print(f"Thread started: {button}")
+            # self.threads.append(t)
+
+            asyncio.create_task(self.key_listener(button, function))
         else:
             print(f"Key: {self.button_map[button]}")
             keyboard.add_hotkey(self.button_map[button], function)
@@ -91,3 +94,17 @@ class Controller:
                     ):
                         print("running function")
                         function()
+
+    async def key_listener(self, button, function):
+        async for event in self.gamepad.async_read_loop():
+            if event.type == ecodes.EV_KEY:
+                key_event = categorize(event)
+                if (
+                    key_event.keycode == self.button_map[button]
+                    and key_event.keystate == key_event.key_down
+                ):
+                    try:
+                        print("running function")
+                        function()
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
