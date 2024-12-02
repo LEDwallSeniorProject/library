@@ -2,7 +2,7 @@ from matrix_library import shapes as s, canvas as c
 import time
 import random
 
-canvas = c.Canvas()
+canvas = c.Canvas(renderMode="zmq")
 circle = s.Circle(10, (64, 96), (0, 255, 0))
 particles = []
 

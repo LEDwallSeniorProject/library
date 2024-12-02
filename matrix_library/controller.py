@@ -21,14 +21,12 @@ from threading import Thread
 if re.search("armv|aarch64", platform.machine()) and re.search(
     "csledpi", platform.node()
 ):
-    from evdev import InputDevice, categorize, ecodes
-
+    from evdev import InputDevice, categorize, ecodes, list_devices
     mode = "board"
 
 else:
     import pygame
     import keyboard
-
     mode = "debug"
 
 
@@ -40,7 +38,10 @@ class Controller:
         if mode == "board":
             while self.gamepad is None:
                 try:
-                    self.gamepad = InputDevice("/dev/input/event1")
+                    # autodetection of gamepad
+                    devices = [evdev.InputDevice(path) for path in evdev.list_devices()]
+                    if(len(devices) > 0):
+                        self.gamepad = InputDevice(devices[0].path)
                 except:
                     print("No gamepad found")
                     time.sleep(1)
