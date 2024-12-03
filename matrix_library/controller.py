@@ -1,15 +1,30 @@
+# Controller mappings:
+# Player 1:                          Player 2:
+#   | LB |              | RB |                 | LB2 |            | RB2 |
+#
+#       ---               ---                     ---               ---
+#      | UP |            | X |                  | UP2 |            | X2 |
+#  --           --     --     --             --          --     --       --
+# | LEFT    RIGHT |   | Y     A |          | LEFT2    RIGHT2 | | Y2      A2 | 
+#  --           --     --     --             --          --     --       --
+#     | DOWN |           | B |                 | DOWN2 |           | B2 |
+#       ---                                       ---               ---
+#       SELECT      START                           SELECT2    START2
+
 # Keyboard to controller mappings:
 # -------------------------------
+# Player 1:                          Player 2:
+# | Q |            | E |             | U |           | O |
 #
-#  |   Q   |          |   E   |
-#
-#     ---                ---
-#    | W |              | I |
-#  --     --        ---  ---  ---
-# | A     D |      | J |     | L |
-#  --     --        ---  ---  ---
-#    | S |              | K |
-#     ---                ---
+#     ---           ---                  ---          ---
+#    | W |         | T |                | I |        | [ |
+#  --     --     --     --            --     --    --     --
+# | A     D |   | F     G |          | J     L |  | ;     ' | 
+#  --     --     --     --            --     --    --     --
+#    | S |         | V |                | K |        | / |
+#     ---                                ---          ---
+# SELECT: Z                           SELECT: M
+# START:  C                           START: .
 
 import time
 import re
@@ -30,10 +45,10 @@ else:
     mode = "workstation"
 
 class Controller:
-    def __init__(self):
+    def __init__(self, debug = False):
 
         # debug state
-        self.debug = False
+        self.debug = debug
         if self.debug: logging.basicConfig(level=logging.DEBUG)
 
         # map of functions for evdev
@@ -88,32 +103,43 @@ class Controller:
         # setup workstation mode with pygame and keyboard input
         elif mode == "workstation":
             self.button_map = {
+                # controller for player one, use WASD and nearby keps
                 "LB": "q",
                 "RB": "e",
                 "UP": "w",
                 "DOWN": "s",
                 "LEFT": "a",
                 "RIGHT": "d",
-                "A": "l",
-                "B": "k",
-                "Y": "j",
-                "X": "i",
+                "A": "g",
+                "B": "v",
+                "Y": "f",
+                "X": "t",
+                "SELECT": "z",
+                "START": "c",
+                # controller for player two, use IJKL and nearby keys
+                "LB2": "u",
+                "RB2": "o",
+                "UP2": "i",
+                "DOWN2": "k",
+                "LEFT2": "j",
+                "RIGHT2": "l",
+                "A2": "'",
+                "B2": "/",
+                "Y2": ";",
+                "X2": "[",
+                "SELECT2": "m",
+                "START2": ".",
             }
+
 
         # debug output
         logging.debug(self.button_map)
 
-
-    # destructor - need this to stop any threads
-    # def __del__(self):
-    #     logging.info("Stopping controller")
-    #     if self.t is not None:
-    #         del self.t
-
     # asyncio gamepad_event function -- internal use only
     async def _gamepad_events(self,device):
+        device_num = "1" if device is self.gamepad else "2"
         async for event in device.async_read_loop():
-            logging.debug(f"_gamepad_events: {device.path} {evdev.categorize(event)}") 
+            logging.debug(f"_gamepad_events {device_num}: {device.path} {evdev.categorize(event)}") 
 
             if event.type == evdev.ecodes.EV_KEY:
                     key_event = evdev.categorize(event)
@@ -121,18 +147,30 @@ class Controller:
                         key_event.keystate == key_event.key_hold):
                             if key_event.keycode in evdev.ecodes.ecodes:
                                 # map key_event.keycode to integer number
-                                logging.debug(f"_gamepad_events: Integer keycode value: {evdev.ecodes.ecodes[key_event.keycode]}")
+                                logging.debug(f"_gamepad_events {device_num}: Integer keycode value: {evdev.ecodes.ecodes[key_event.keycode]}")
                                 button_code = evdev.ecodes.ecodes[key_event.keycode]
                                 # map the button_code integer number to the internal UP/DOWN/LEFT/RIGHT/etc
-                                button = list(self.button_map.keys())[list(self.button_map.values()).index(button_code)]
-                                logging.debug(f"_gamepad_events: button {button}")
+                                try:
+                                    button = list(self.button_map.keys())[list(self.button_map.values()).index(button_code)]
+                                    logging.debug(f"_gamepad_events {device_num}: button {button}")
+                                except ValueError as v:
+                                    logging.debug(f"_gamepad_events {device_num}: button_code {button_code} not recognized.")
+                                    next
+
+                                # if on the second gamepad, update the button to the "<blah>2" button
+                                if device_num == 2:
+                                    logging.debug(f"_gamepad_events {device_num}: button {button} remapping to {button}2")
+                                    button = f"{button}2"
+                                    logging.debug(f"_gamepad_events {device_num}: button {button} remapped")
 
                                 # check to see if a mapped function exists for that
                                 if button in self.function_map:
-                                    logging.debug(f"_gamepad_events: button {button} calls function {self.function_map[button]['function']}")
+                                    logging.debug(f"_gamepad_events {device_num}: button {button} calls function {self.function_map[button]['function']}")
                                     self.function_map[button]["function"]()
                                 else:
-                                    logging.debug(f"_gamepad_events: button {button} is not mapped to a function.")
+                                    logging.debug(f"_gamepad_events {device_num}: button {button} is not mapped to a function.")
+                            else:
+                                logging.info(f"_gamepad_events {device_num}: {key_event.keycode} not recognized.")
 
     # asyncio loop_thread function -- internal use only
     def _loop_thread(self,loop):
