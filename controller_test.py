@@ -42,13 +42,19 @@ polygon = matrix.Polygon(matrix.get_polygon_vertices(5, 20, (64, 64)), (255, 0, 
 # Whether to show the polygon or not
 toggle = True
 
+phrase = matrix.Phrase(text="Key: ",position=[5,115])
+
 # Function to bind to a controller button press
 def toggle_toggle():
     print("Pressed button UP")
+    global phrase
+    phrase.set_text("Key: UP")
+    
     global toggle
     toggle = not toggle
+
         
-# Example binding of a controller press to a function
+# Example binding of a controller presses to a function
 controller.add_function("UP", toggle_toggle)
 controller.add_function("UP2", toggle_toggle)
 
@@ -62,7 +68,7 @@ leftoverbuttons = {
     "A2": "'", "B2": "/", "Y2": ";", "X2": "[", "SELECT2": "m", "START2": ".",
 }
 for key, value in leftoverbuttons.items():
-    exec(f"def {key}(): print(\"Pressed button {key}\")")
+    exec(f"def {key}(): \n\tglobal phrase\n\tphrase.set_text(\"Key: {key}\")\n\tprint(\"Pressed button {key}\")")
 
 # Add all these functions to the controller add_functions
 for button in leftoverbuttons.keys():
@@ -80,6 +86,9 @@ while True:
     if toggle:
         polygon.rotate(1, (64, 64))
         canvas.add(polygon)
+
+    # add the phrase
+    canvas.add(phrase)
 
     # draw to the screen
     canvas.draw()
