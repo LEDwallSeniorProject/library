@@ -45,18 +45,27 @@ toggle = True
 phrase = matrix.Phrase(text="Key: ",position=[5,115])
 
 # Function to bind to a controller button press
-def toggle_toggle():
+def toggle_toggle_up():
     print("Pressed button UP")
     global phrase
     phrase.set_text("Key: UP")
-    
+
+    global toggle
+    toggle = not toggle
+
+# Function to bind to a controller button press
+def toggle_toggle_up2():
+    print("Pressed button UP2")
+    global phrase
+    phrase.set_text("Key: UP2")
+
     global toggle
     toggle = not toggle
 
         
 # Example binding of a controller presses to a function
-controller.add_function("UP", toggle_toggle)
-controller.add_function("UP2", toggle_toggle)
+controller.add_function("UP", toggle_toggle_up)
+controller.add_function("UP2", toggle_toggle_up2)
 
 # Make a whole lot of functions programatically for all our other possible buttons
 leftoverbuttons = {
