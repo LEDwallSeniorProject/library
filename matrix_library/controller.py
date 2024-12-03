@@ -33,7 +33,7 @@ class Controller:
     def __init__(self):
 
         # debug state
-        self.debug = False
+        self.debug = True
         if self.debug: logging.basicConfig(level=logging.DEBUG)
 
         # map of functions for evdev
@@ -43,7 +43,7 @@ class Controller:
         self.gamepad = None
         self.gamepad2 = None
 
-        # variable for evdev loop thread
+        # variables for evdev loop thread
         self.t = None
 
         # setup the LEDwall with evdev for controller inputs
@@ -58,7 +58,7 @@ class Controller:
                             if self.gamepad is None:
                                 self.gamepad = evdev.InputDevice(device.path)
                             elif self.gamepad2 is None:
-                                self.gamepad = evdev.InputDevice(device.path)
+                                self.gamepad2 = evdev.InputDevice(device.path)
                             else:
                                 logging.info(f"Two controllers already mapped. Skipping {device.path} - {device.name}")
                 except:
@@ -79,10 +79,17 @@ class Controller:
                 "SELECT": 49,
             }
 
-            # setup evdev async/await functions
+            # setup evdev async/await functions for gamepad1
             asyncio.ensure_future(self._gamepad_events(self.gamepad))
+            if self.gamepad2 is not None: asyncio.ensure_future(self._gamepad_events(self.gamepad2))
             self.loop = asyncio.get_event_loop()
             self.t = threading.Thread(target=self._loop_thread, args=(self.loop,), daemon=True).start()
+
+            # # setup evdev async/await functions for gamepad2
+            # if self.gamepad2 is not None:
+            #     asyncio.ensure_future(self._gamepad_events(self.gamepad2))
+            #     self.loop2 = asyncio.get_event_loop()
+            #     self.t2 = threading.Thread(target=self._loop_thread, args=(self.loop2,), daemon=True).start()
 
         # setup workstation mode with pygame and keyboard input
         elif mode == "workstation":
