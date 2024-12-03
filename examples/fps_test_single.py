@@ -1,7 +1,7 @@
 from matrix_library import shapes as s, canvas as c
 import time
 
-canvas = c.Canvas(renderMode="zmq")
+canvas = c.Canvas(renderMode="zmq",limitFps=False)
 thickness = 2
 pentagon = s.Polygon(s.get_polygon_vertices(5, 45, (64, 64)), (0, 0, 255))
 

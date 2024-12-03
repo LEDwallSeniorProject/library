@@ -13,9 +13,9 @@ import sys
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
-# Detection of Platform for import
-if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
-    import zmq
+# # Detection of Platform for import
+# if re.search("armv|aarch64",platform.machine()) and re.search("csledpi",platform.node()):
+#     import zmq
 
 class Canvas:
     def __init__(self, backgroundcolor=(0, 0, 0), fps=30, limitFps=True, renderMode="", zmqRenderTarget="localhost", zmqRenderPort="55000"):
