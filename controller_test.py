@@ -50,6 +50,7 @@ def toggle_toggle():
         
 # Example binding of a controller press to a function
 controller.add_function("UP", toggle_toggle)
+controller.add_function("UP2", toggle_toggle)
 
 # Make a whole lot of functions programatically for all our other possible buttons
 leftoverbuttons = {
@@ -57,7 +58,7 @@ leftoverbuttons = {
     "LB": "q", "RB": "e", "DOWN": "s", "LEFT": "a", "RIGHT": "d", 
     "A": "g", "B": "v", "Y": "f", "X": "t","SELECT": "z", "START": "c",
     # controller for player two, use IJKL and nearby keys
-    "LB2": "u", "RB2": "o", "UP2": "i", "DOWN2": "k", "LEFT2": "j", "RIGHT2": "l",
+    "LB2": "u", "RB2": "o", "DOWN2": "k", "LEFT2": "j", "RIGHT2": "l",
     "A2": "'", "B2": "/", "Y2": ";", "X2": "[", "SELECT2": "m", "START2": ".",
 }
 for key, value in leftoverbuttons.items():

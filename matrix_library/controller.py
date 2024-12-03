@@ -26,6 +26,7 @@
 # SELECT: Z                           SELECT: M
 # START:  C                           START: .
 
+import copy
 import time
 import re
 import platform
@@ -139,7 +140,7 @@ class Controller:
     async def _gamepad_events(self,device):
         device_num = "1" if device is self.gamepad else "2"
         async for event in device.async_read_loop():
-            logging.debug(f"_gamepad_events {device_num}: {device.path} {evdev.categorize(event)}") 
+            #logging.debug(f"_gamepad_events {device_num}: {device.path} {evdev.categorize(event)}") 
 
             if event.type == evdev.ecodes.EV_KEY:
                     key_event = evdev.categorize(event)
@@ -158,10 +159,10 @@ class Controller:
                                     next
 
                                 # if on the second gamepad, update the button to the "<blah>2" button
-                                if device_num == 2:
-                                    logging.debug(f"_gamepad_events {device_num}: button {button} remapping to {button}2")
+                                if int(device_num) == 2:
+                                    origbutton = copy.deepcopy(button)
                                     button = f"{button}2"
-                                    logging.debug(f"_gamepad_events {device_num}: button {button} remapped")
+                                    logging.debug(f"_gamepad_events {device_num}: button {origbutton} remapped to {button}")
 
                                 # check to see if a mapped function exists for that
                                 if button in self.function_map:
@@ -187,10 +188,10 @@ class Controller:
                 "function": function,
                 "button": button,
             }
-            logging.debug(self.function_map)
+            logging.debug(f"add_function: Key: {button}, {self.function_map[button]['function']}")
 
         elif mode == "workstation":
-            logging.debug(f"Key: {self.button_map[button]}") 
+            logging.debug(f"add_function: Key: {self.button_map[button]}") 
             keyboard.add_hotkey(self.button_map[button], function)
 
         else:
