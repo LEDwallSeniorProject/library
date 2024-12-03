@@ -33,7 +33,7 @@ class Controller:
     def __init__(self):
 
         # debug state
-        self.debug = True
+        self.debug = False
         if self.debug: logging.basicConfig(level=logging.DEBUG)
 
         # map of functions for evdev
@@ -62,7 +62,7 @@ class Controller:
                             else:
                                 logging.info(f"Two controllers already mapped. Skipping {device.path} - {device.name}")
                 except:
-                    logging.debug("No gamepad found") 
+                    logging.info("No gamepad found - sleeping 1 second") 
                     time.sleep(1)
             self.button_map = {
                 "LB": 37,
@@ -84,12 +84,6 @@ class Controller:
             if self.gamepad2 is not None: asyncio.ensure_future(self._gamepad_events(self.gamepad2))
             self.loop = asyncio.get_event_loop()
             self.t = threading.Thread(target=self._loop_thread, args=(self.loop,), daemon=True).start()
-
-            # # setup evdev async/await functions for gamepad2
-            # if self.gamepad2 is not None:
-            #     asyncio.ensure_future(self._gamepad_events(self.gamepad2))
-            #     self.loop2 = asyncio.get_event_loop()
-            #     self.t2 = threading.Thread(target=self._loop_thread, args=(self.loop2,), daemon=True).start()
 
         # setup workstation mode with pygame and keyboard input
         elif mode == "workstation":
@@ -139,11 +133,15 @@ class Controller:
                                     self.function_map[button]["function"]()
                                 else:
                                     logging.debug(f"_gamepad_events: button {button} is not mapped to a function.")
-    
+
     # asyncio loop_thread function -- internal use only
     def _loop_thread(self,loop):
-        asyncio.set_event_loop(loop)
-        loop.run_forever()
+        try:
+            asyncio.set_event_loop(loop)
+            loop.run_forever()
+        except:
+            logging.info(f"System exit caught - exiting")
+            loop.stop()
 
     def add_function(self, button, function):
         if mode == "board":
