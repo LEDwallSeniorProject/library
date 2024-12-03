@@ -33,7 +33,7 @@ class Controller:
     def __init__(self):
 
         # debug state
-        self.debug = True
+        self.debug = False
         if self.debug: logging.basicConfig(level=logging.DEBUG)
 
         # map of functions for evdev
@@ -75,6 +75,8 @@ class Controller:
                 "B": 36,
                 "Y": 23,
                 "X": 35,
+                "START": 24,
+                "SELECT": 49,
             }
 
             # setup evdev async/await functions
