@@ -1,7 +1,7 @@
 from matrix_library import shapes as s, canvas as c
 import time
 
-canvas = c.Canvas(renderMode='zmq',limitFps=False,zmqTarget="csledpi.calvin.edu")
+canvas = c.Canvas(renderMode='zmq',limitFps=False)
 thickness = 2
 triangle = s.Polygon(s.get_polygon_vertices(3, 20, (32, 32)), (255, 0, 0))
 square = s.Polygon(s.get_polygon_vertices(4, 20, (96, 32)), (0, 255, 0))
