@@ -1,8 +1,8 @@
-from matrix_library import canvas as c, shapes as s
+import matrix_library as matrix
 
-canvas = c.Canvas()
+canvas = matrix.Canvas()
 
 while True:
     canvas.clear()
-    canvas.add(s.Pixel((64, 64)))
+    canvas.add(matrix.Pixel((64, 64)))
     canvas.draw()

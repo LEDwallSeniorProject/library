@@ -1,22 +1,38 @@
-from matrix_library import shapes as s, canvas as c
 from datetime import datetime
+import sys
+import matrix_library as matrix
 import time
 
-canvas = c.Canvas()
-circle = s.CircleOutline(64, (64, 64), (255, 255, 255))
+controller = matrix.Controller()
+canvas = matrix.Canvas()
+
+exited = False
+
+def exit_prog():
+    global canvas, exited
+    print("quit")
+    canvas.clear()
+    canvas.draw()
+    time.sleep(0.15)
+    exited = True
+
+circle = matrix.CircleOutline(64, (64, 64), (255, 255, 255))
 
 markers = []
 for i in range(12):
-    marker = s.Line((64, 16), (64, 8), (255, 255, 255))
+    marker = matrix.Line((64, 16), (64, 8), (255, 255, 255))
     marker.rotate(i * 30, (64, 64))
     markers.append(marker)
 
+controller.add_function("START", exit_prog)
+
 while True:
+    if exited: sys.exit(0)
     canvas.clear()
 
-    hour_hand = s.Line((64, 64), (64, 24), (255, 0, 0))
-    minute_hand = s.Line((64, 64), (64, 20), (0, 255, 0))
-    second_hand = s.Line((64, 64), (64, 16), (0, 0, 255))
+    hour_hand = matrix.Line((64, 64), (64, 24), (255, 0, 0))
+    minute_hand = matrix.Line((64, 64), (64, 20), (0, 255, 0))
+    second_hand = matrix.Line((64, 64), (64, 16), (0, 0, 255))
 
     now = datetime.now()
     hour = now.hour
@@ -41,4 +57,4 @@ while True:
     canvas.add(minute_hand)
     canvas.add(second_hand)
     canvas.draw()
-    time.sleep(0)
+    time.sleep(1)

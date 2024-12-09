@@ -1,13 +1,11 @@
-from matrix_library import canvas as c, shapes as s
+import matrix_library as matrix
 from dotenv import load_dotenv
 import os
 import requests
 import time
 
 load_dotenv()
-
 access_key = os.getenv("NEWS_ACCESS_KEY")
-
 
 def get_news():
     response = requests.get(
@@ -15,23 +13,22 @@ def get_news():
     )
     return response.json()
 
-
-canvas = c.Canvas()
-
+canvas = matrix.Canvas()
 news = get_news()
 news_index = 0
-title = s.Phrase(news["data"][news_index]["title"], (0, 0), (255, 255, 255), size=2)
-desc = s.Phrase(
+title = matrix.Phrase(news["data"][news_index]["title"], (0, 0), (255, 255, 255), size=2)
+
+desc = matrix.Phrase(
     news["data"][news_index]["description"],
     (0, 128),
     (255, 255, 255),
     size=1,
     auto_newline=True,
 )
-background = s.Polygon(((0, 0), (128, 0), (128, 16), (0, 16)), color=(0, 0, 0))
 
-
+background = matrix.Polygon(((0, 0), (128, 0), (128, 16), (0, 16)), color=(0, 0, 0))
 start_time = time.perf_counter()
+
 while True:
     canvas.clear()
 

@@ -1,11 +1,11 @@
-from matrix_library import shapes as s, canvas as c
+import matrix_library as matrix
 import time
 
-canvas = c.Canvas(renderMode="zmq",limitFps=False)
+canvas = matrix.Canvas(renderMode="zmq",limitFps=False)
 thickness = 2
-pentagon = s.Polygon(s.get_polygon_vertices(5, 45, (64, 64)), (0, 0, 255))
+pentagon = matrix.Polygon(matrix.get_polygon_vertices(5, 45, (64, 64)), (0, 0, 255))
 
-fps_text = s.Phrase("FPS: ...", [0, 0])
+fps_text = matrix.Phrase("FPS: ...", [0, 0])
 
 polygons = [pentagon]
 

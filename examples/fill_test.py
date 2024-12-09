@@ -1,5 +1,4 @@
-from matrix_library import canvas as c, shapes as s
-import random
+import matrix_library as matrix
 import time
 
 # Define dimensions
@@ -33,7 +32,7 @@ colors = [
     (128, 128, 128),  # gray
 ]
 index = 0
-canvas = c.Canvas()
+canvas = matrix.Canvas()
 
 while True:
     canvas.clear()

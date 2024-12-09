@@ -1,9 +1,7 @@
-from matrix_library import shapes as s, canvas as c
-import time
-import random
+import matrix_library as matrix
 
-canvas = c.Canvas(renderMode="zmq")
-circle = s.Circle(10, (64, 96), (0, 255, 0))
+canvas = matrix.Canvas(renderMode="zmq")
+circle = matrix.Circle(10, (64, 96), (0, 255, 0))
 particles = []
 
 
@@ -12,7 +10,7 @@ def distance(x1, y1, x2, y2):
     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
 
 
-class Particle(s.Circle):
+class Particle(matrix.Circle):
     def __init__(self, radius, center, color, velocity_x, velocity_y):
         super().__init__(radius, center, color)
         self.velocity_x = velocity_x
@@ -56,7 +54,6 @@ class Particle(s.Circle):
         self.translate(intrusion_dist * dist_x_norm, intrusion_dist * dist_y_norm)
         other.translate(-intrusion_dist * dist_x_norm, -intrusion_dist * dist_y_norm)
 
-
 particle = Particle(8, (32, 96), (0, 255, 0), 3, 2)
 particles.append(particle)
 particle = Particle(10, (96, 96), (0, 0, 255), -3, 2)
@@ -67,7 +64,6 @@ particle = Particle(6, (64, 75), (255, 255, 0), -2, -3)
 particles.append(particle)
 
 while True:
-
     # Calculate the new position of the particles
     for particle in particles:
         if (
@@ -94,5 +90,3 @@ while True:
     for particle in particles:
         canvas.add(particle)
     canvas.draw()
-
-time.sleep(1 / 30)

@@ -9,7 +9,6 @@ gamepad = InputDevice("/dev/input/event2")
 canvas = c.Canvas()
 # gamepad = InputDevice("/dev/input/event2")
 
-
 # Constants
 WIDTH, HEIGHT = 128, 128
 BALL_RADIUS = 10

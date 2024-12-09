@@ -1,34 +1,56 @@
-# Imports
 from PIL import Image
+import matrix_library as matrix
+import zmq
 import time
 import requests
 import io
 import sys
-from matrix_library import canvas as c, shapes as s
+
+# program setup
+controller = matrix.Controller()
+# canvas = matrix.Canvas()
 
 def exit_prog():
-    print(quit)
-    # canvas.delete()
-    sys.exit()
+    global canvas, exited
+    print("quit")
+    canvas.clear()
+    canvas.draw()
+    time.sleep(0.15)
+    exited = True
+
+# Create the ZMQ connection
+context = zmq.Context()
+
+#  Socket to talk to server
+#print("Connecting to LED ZMQ server…")
+socket = context.socket(zmq.REQ)
+socket.connect("tcp://localhost:55000")
 
 # random picture URL
 w = h = 128
 url = f"https://picsum.photos/{w}"
 
-#canvas = c.Canvas(renderMode="zmq",zmqRenderTarget="localhost",zmqRenderPort=5500)
-canvas = c.Canvas()
-canvas.clear()
+controller.add_function("START", exit_prog)
 
-r = requests.get(url, stream=True)
-if r.status_code == 200:
-    img = Image.open(io.BytesIO(r.content))
-    pixels = list(img.getdata())
-    #print(pixels)
+for i in range(0,3):
+    r = requests.get(url, stream=True)
+    if r.status_code == 200:
+        img = Image.open(io.BytesIO(r.content))
+        # pixels = list(img.getdata())
+        # print(pixels)
 
-    img = s.Image(width=128,height=128,position=[0,0])
-    img.loadpixels(pixels)
+        # Convert the image to RGBA mode
+        img = img.convert("RGBA")
 
-    canvas.add(img)
-    canvas.draw()
+        # covert to raw bytes
+        rawimage = img.tobytes()
 
-    time.sleep(10)
+        # # send the request
+        socket.send(rawimage)
+
+        # #  Get the reply.
+        message = socket.recv()
+
+    for j in range(0,100):
+        if exited: sys.exit(0)
+        time.sleep(0.05)

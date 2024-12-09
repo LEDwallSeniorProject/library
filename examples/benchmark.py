@@ -1,8 +1,7 @@
-from matrix_library import shapes as s, canvas as c
+import matrix_library as matrix
 import time
 
-canvas = c.Canvas()
-
+canvas = matrix.Canvas()
 
 # Spin polygons outlines
 spin_create_times = []
@@ -14,20 +13,20 @@ spin_frame_times = []
 
 spin_create_time_start = time.perf_counter()
 thickness = 2
-triangle = s.PolygonOutline(
-    s.get_polygon_vertices(3, 20, (32, 32)), (255, 0, 0), thickness
+triangle = matrix.PolygonOutline(
+    matrix.get_polygon_vertices(3, 20, (32, 32)), (255, 0, 0), thickness
 )
-square = s.PolygonOutline(
-    s.get_polygon_vertices(4, 20, (96, 32)), (0, 255, 0), thickness
+square = matrix.PolygonOutline(
+    matrix.get_polygon_vertices(4, 20, (96, 32)), (0, 255, 0), thickness
 )
-pentagon = s.PolygonOutline(
-    s.get_polygon_vertices(5, 20, (64, 64)), (0, 0, 255), thickness
+pentagon = matrix.PolygonOutline(
+    matrix.get_polygon_vertices(5, 20, (64, 64)), (0, 0, 255), thickness
 )
-hexagon = s.PolygonOutline(
-    s.get_polygon_vertices(6, 20, (32, 96)), (255, 255, 0), thickness
+hexagon = matrix.PolygonOutline(
+    matrix.get_polygon_vertices(6, 20, (32, 96)), (255, 255, 0), thickness
 )
-heptagon = s.PolygonOutline(
-    s.get_polygon_vertices(7, 20, (96, 96)), (0, 255, 255), thickness
+heptagon = matrix.PolygonOutline(
+    matrix.get_polygon_vertices(7, 20, (96, 96)), (0, 255, 255), thickness
 )
 polygons = [triangle, square, pentagon, hexagon, heptagon]
 spin_create_times.append(time.perf_counter() - spin_create_time_start)
@@ -58,11 +57,11 @@ spin2_frame_times = []
 
 spin2_create_time_start = time.perf_counter()
 thickness = 2
-triangle = s.Polygon(s.get_polygon_vertices(3, 20, (32, 32)), (255, 0, 0))
-square = s.Polygon(s.get_polygon_vertices(4, 20, (96, 32)), (0, 255, 0))
-pentagon = s.Polygon(s.get_polygon_vertices(5, 20, (64, 64)), (0, 0, 255))
-hexagon = s.Polygon(s.get_polygon_vertices(6, 20, (32, 96)), (255, 255, 0))
-heptagon = s.Polygon(s.get_polygon_vertices(7, 20, (96, 96)), (0, 255, 255))
+triangle = matrix.Polygon(matrix.get_polygon_vertices(3, 20, (32, 32)), (255, 0, 0))
+square = matrix.Polygon(matrix.get_polygon_vertices(4, 20, (96, 32)), (0, 255, 0))
+pentagon = matrix.Polygon(matrix.get_polygon_vertices(5, 20, (64, 64)), (0, 0, 255))
+hexagon = matrix.Polygon(matrix.get_polygon_vertices(6, 20, (32, 96)), (255, 255, 0))
+heptagon = matrix.Polygon(matrix.get_polygon_vertices(7, 20, (96, 96)), (0, 255, 255))
 polygons = [triangle, square, pentagon, hexagon, heptagon]
 spin2_create_times.append(time.perf_counter() - spin2_create_time_start)
 
@@ -92,7 +91,7 @@ bounce_draw_times = []
 bounce_frame_times = []
 
 bounce_create_time_start = time.perf_counter()
-circle = s.Circle(10, (64, 96), (0, 255, 0))
+circle = matrix.Circle(10, (64, 96), (0, 255, 0))
 velocity_y = 2
 velocity_x = 3
 bounce_create_times.append(time.perf_counter() - bounce_create_time_start)
@@ -123,7 +122,7 @@ scroll_draw_times = []
 scroll_frame_times = []
 
 scroll_create_time_start = time.perf_counter()
-text = s.Phrase(
+text = matrix.Phrase(
     "In the beginning, God created the heavens and the earth. The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters. And God said, 'Let there be light,' and there was light. And God saw that the light was good. And God separated the light from the darkness. God called the light Day, and the darkness he called Night. And there was evening and there was morning, the first day. And God said, 'Let there be an expanse in the midst of the waters, and let it separate the waters from the waters.' And God made the expanse and separated the waters that were under the expanse from the waters that were above the expanse. And it was so. And God called the expanse Heaven. And there was evening and there was morning, the second day.",
     [0, 0],
     auto_newline=True,
@@ -180,14 +179,14 @@ print(f"Scroll Draw: {scroll_avg_draw_time:.5f}")
 print(f"Scroll Frame: {scroll_avg_frame_time:.5f}")
 
 
-spin_fps_title = s.Phrase(f"Spin FPS: ", [0, 0])
-spin_fps_num = s.Phrase(f"{spin_avg_fps:.2f}", [0, 8])
-spin2_fps_title = s.Phrase(f"Spin2 FPS: ", [0, 16])
-spin2_fps_num = s.Phrase(f"{spin2_avg_fps:.2f}", [0, 24])
-bounce_fps_title = s.Phrase(f"Bounce FPS: ", [0, 32])
-bounce_fps_num = s.Phrase(f"{bounce_avg_fps:.2f}", [0, 40])
-scroll_fps_title = s.Phrase(f"Scroll FPS: ", [0, 48])
-scroll_fps_num = s.Phrase(f"{scroll_avg_fps:.2f}", [0, 56])
+spin_fps_title = matrix.Phrase(f"Spin FPS: ", [0, 0])
+spin_fps_num = matrix.Phrase(f"{spin_avg_fps:.2f}", [0, 8])
+spin2_fps_title = matrix.Phrase(f"Spin2 FPS: ", [0, 16])
+spin2_fps_num = matrix.Phrase(f"{spin2_avg_fps:.2f}", [0, 24])
+bounce_fps_title = matrix.Phrase(f"Bounce FPS: ", [0, 32])
+bounce_fps_num = matrix.Phrase(f"{bounce_avg_fps:.2f}", [0, 40])
+scroll_fps_title = matrix.Phrase(f"Scroll FPS: ", [0, 48])
+scroll_fps_num = matrix.Phrase(f"{scroll_avg_fps:.2f}", [0, 56])
 
 fps_texts = [
     spin_fps_title,

@@ -1,15 +1,14 @@
 import cProfile
 import pstats
-from matrix_library import shapes as s, canvas as c
+import matrix_library as matrix
 
 # Profile the function
 profiler = cProfile.Profile()
 profiler.enable()
 
-
 def scrolling():
-    canvas = c.Canvas()
-    text = s.Phrase("WOW!", [64, 64], size=8)
+    canvas = matrix.Canvas()
+    text = matrix.Phrase("WOW!", [64, 64], size=8)
     for i in range(1000):
         canvas.clear()
         text.translate(-2, 0)
@@ -18,10 +17,8 @@ def scrolling():
         canvas.add(text)
         canvas.draw()
 
-
 def benchmark():
     import benchmark
-
 
 # Call your method here
 result = benchmark()

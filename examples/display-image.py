@@ -1,5 +1,4 @@
-# Imports
-from matrix_library import canvas as c, shapes as s
+import matrix_library as matrix
 import sys
 import time
 
@@ -12,10 +11,10 @@ if len(sys.argv) < 2:
 filename = sys.argv[1]
 
 #canvas = c.Canvas(renderMode="zmq",zmqRenderTarget="localhost",zmqRenderPort=5500)
-canvas = c.Canvas()
+canvas = matrix.Canvas()
 canvas.clear()
 
-img = s.Image(width=128, height=128, position=[0,0])
+img = matrix.Image(width=128, height=128, position=[0,0])
 img.loadfile(filename=filename)
 # for i in img.pixels:
 #     print(i)

@@ -1,10 +1,8 @@
 import matrix_library as matrix
 import time
 
-
 canvas = matrix.Canvas()
 controller = matrix.Controller()
-
 
 # Setup the controller functions
 # If you want to use any outside variables, you need to use the global keyword
@@ -12,21 +10,17 @@ def up():
     global snake_dir
     snake_dir = [0, -1]
 
-
 def down():
     global snake_dir
     snake_dir = [0, 1]
-
 
 def left():
     global snake_dir
     snake_dir = [-1, 0]
 
-
 def right():
     global snake_dir
     snake_dir = [1, 0]
-
 
 # Add the functions from above to the controller buttons
 controller.add_function("UP", up)
@@ -34,17 +28,13 @@ controller.add_function("DOWN", down)
 controller.add_function("LEFT", left)
 controller.add_function("RIGHT", right)
 
-
 snake_pos = [16, 16]
 snake_body = [[16, 16], [15, 16], [14, 16]]
-
 snake_dir = [1, 0]
 
 game_over = False
-
 food_spawned = True
 food_pos = [16, 8]
-
 
 while not game_over:
 
@@ -82,7 +72,6 @@ while not game_over:
     food.rotate(45, ((food_pos[0] * 4) + 2, (food_pos[1] * 4) + 2))
 
     canvas.add(food)
-
     canvas.draw()
 
     snake_pos[0] += snake_dir[0]
