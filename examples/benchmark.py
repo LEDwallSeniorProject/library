@@ -3,6 +3,9 @@ import time
 
 canvas = c.Canvas()
 
+#starting time counter
+startup_start = time.perf_counter()
+
 
 # Spin polygons outlines
 spin_create_times = []
@@ -199,9 +202,13 @@ fps_texts = [
     scroll_fps_title,
     scroll_fps_num,
 ]
+startup_end = time.perf_counter()  # ending time
+startup_time = startup_end - startup_start  # calculate diifference
 
 # while True:
 #     canvas.clear()
 #     for fps_text in fps_texts:
 #         canvas.add(fps_text)
 #     canvas.draw()
+
+print(f"\n🚀 **Programme opening time **: {startup_time:.6f} seconds", flush=True)
