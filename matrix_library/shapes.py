@@ -159,3 +159,5 @@ def get_polygon_vertices(sides: int, radius: float = 1, center: tuple = (0, 0)) 
     angle_step = 2 * math.pi / sides
     vertices = [(center[0] + radius * math.cos(i * angle_step), center[1] + radius * math.sin(i * angle_step)) for i in range(sides)]
     return vertices
+
+#shapes optimized 
