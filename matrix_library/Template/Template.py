@@ -41,6 +41,8 @@ class Template(LEDWall.LEDProgram):
         # code here will run once before loop starts
         super().__loop__()
         # code here will run once after the loop ends
+        # stop the loop by setting self.running = False
+        # fully exit by calling self.exit()
 
 
 # every program needs this line
