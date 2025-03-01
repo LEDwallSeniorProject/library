@@ -1,5 +1,6 @@
 from matrix_library import LEDWall, Canvas, Controller, shapes
 
+
 class Template(LEDWall.LEDProgram):
     def __init__(self, canvas, controller):
         # define any of your variables here
@@ -33,7 +34,7 @@ class Template(LEDWall.LEDProgram):
 
     # OPTIONAL FUNCTION
     # this function will override the __loop__() function
-    # use super().__loop__() if you just want to add code 
+    # use super().__loop__() if you just want to add code
     # before the loop begins or after it ends
     # or write your own looping
     def __loop__(self):
@@ -45,5 +46,3 @@ class Template(LEDWall.LEDProgram):
 # every program needs this line
 if __name__ == "__main__":
     Template(Canvas(), Controller())
-    
-   

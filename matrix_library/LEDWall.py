@@ -1,5 +1,6 @@
 import time
 
+
 class LEDProgram:
     def __init__(self, canvas, controller):
         self.canvas = canvas
@@ -29,20 +30,21 @@ class LEDProgram:
     Feel free to add code to this by creating your own function 
     called __loop__() in your child class and calling this with super()
     """
+
     def __loop__(self):
 
         last_time = time.time()
         fps = 60
-        frame_time = 1/fps
+        frame_time = 1 / fps
         frames = 0
 
         while self.running:
             current_time = time.time()
             elapsed_time = current_time - last_time
-            
+
             if elapsed_time > frame_time:
                 last_time = current_time
-                frames += 1 
+                frames += 1
 
                 self.canvas.clear()
                 self.__draw__()
@@ -56,5 +58,3 @@ class LEDProgram:
     def exit(self):
         self.running = False
         self.controller.stop()
-        
-    
