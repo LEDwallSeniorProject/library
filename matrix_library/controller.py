@@ -274,4 +274,3 @@ class Workstation_listener:
                 self.controller.execution_map[key.char]()
         except KeyError as e:
             logging.debug("KeyError:" + str(e))
-            pass
