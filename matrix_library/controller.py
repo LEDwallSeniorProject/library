@@ -40,13 +40,18 @@ if re.search("armv|aarch64", platform.machine()) and re.search(
 ):
     import asyncio, evdev
     mode = "board"
+    logging.debug(mode)
 
 else:
-    import keyboard, pygame
+    import pynput, pygame
     mode = "workstation"
+    logging.debug(mode)
 
 class Controller:
     def __init__(self, debug = False):
+
+        if mode == "workstation":
+            self.listener = Workstation_listener(start=True, controller=self)
 
         # debug state
         self.debug = debug
@@ -103,6 +108,7 @@ class Controller:
 
         # setup workstation mode with pygame and keyboard input
         elif mode == "workstation":
+            self.execution_map = {}
             self.button_map = {
                 # controller for player one, use WASD and nearby keps
                 "LB": "q",
@@ -192,7 +198,50 @@ class Controller:
 
         elif mode == "workstation":
             logging.debug(f"add_function: Key: {self.button_map[button]}") 
-            keyboard.add_hotkey(self.button_map[button], function)
-
+            self.execution_map[self.button_map[button]] = function
         else:
             logging.warning(f"Unhandled mode: {mode}, button: {button}, function: {function}")
+
+    def stop(self):
+        if mode == "workstation":
+            self.listener.stop()
+
+    def clear(self):
+        if mode == "workstation":
+            self.execution_map = {}
+
+
+class Workstation_listener:
+    def __init__(self, start=False, debug=False, controller=None):
+        self.running = False
+        self.controller = controller
+
+        if debug: logging.basicConfig(level=logging.DEBUG)
+        
+        if start:
+            self.start()
+    
+    def start(self):
+        if self.running == False:
+            self.running = True
+            logging.debug("Listening for keyboard events")
+            self.listener = pynput.keyboard.Listener(
+                    on_press=self.on_press_handler)
+            self.listener.start()
+
+
+    def stop(self):
+        if self.running == True:
+            self.running = False
+            logging.debug("Keyboard listener stopped")
+            self.listener.stop()
+
+    def on_press_handler(self, key):
+        try:
+            if isinstance(key, pynput.keyboard.KeyCode) and self.controller.execution_map[key.char]:
+                self.controller.execution_map[key.char]()
+        except KeyError as e:
+            logging.debug("KeyError:" + str(e))
+            pass
+
+

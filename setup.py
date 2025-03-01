@@ -6,11 +6,11 @@ setup(
     version="1.0.0",
     python_requires=">=3.8,<3.12",
     description="A Python library for use of Computer Science Department at Calvin University's matrix LED display",
-    author="Alex Miller, Ellie Sand, Palmer Ford, and Professor Chris Wieringa",
+    author="Alex Miller, Ellie Sand, Palmer Ford, Eli Lewis, Yigit Turan, and Professor Chris Wieringa",
     author_email='cpsc-admin@calvin.edu',
     url='https://github.com/LEDwallSeniorProject/library',
     install_requires=[
-        'numpy','matplotlib','pillow','pygame','scikit-image','keyboard','requests'
+        'numpy','matplotlib','pillow','pygame','scikit-image','pynput','requests'
     ],
     setup_requires=['wheel'],
 )
