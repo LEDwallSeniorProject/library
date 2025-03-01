@@ -1,6 +1,6 @@
-from LEDWall import *
+from matrix_library import LEDWall, Canvas, Controller, shapes
 
-class Template(LEDProgram):
+class Template(LEDWall.LEDProgram):
     def __init__(self, canvas, controller):
         # define any of your variables here
 
@@ -12,7 +12,7 @@ class Template(LEDProgram):
     # and should contain graphics code
     # and updates
     def __draw__(self):
-        title = Shapes.Phrase("Hello World")
+        title = shapes.Phrase("Hello World")
         self.canvas.add(title)
 
     # REQUIRED FUNCTION
@@ -44,6 +44,6 @@ class Template(LEDProgram):
 
 # every program needs this line
 if __name__ == "__main__":
-    Template(matrix.Canvas(), matrix.Controller())
+    Template(Canvas(), Controller())
     
    
