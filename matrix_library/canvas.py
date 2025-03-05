@@ -32,7 +32,9 @@ class Canvas:
         None
         """
         self.color = backgroundcolor
-        self.canvas = np.zeros([128, 128, 3], dtype=np.uint8)
+        self.width = 128
+        self.height = 128
+        self.canvas = np.zeros([self.width, self.height, 3], dtype=np.uint8)
         self.canvas[:, :] = self.color
         self.points = self.get_points()
         self.prev_frame_time = time.perf_counter()
