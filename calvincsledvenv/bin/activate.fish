@@ -29,7 +29,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/enginturan/Desktop/libraryoriginal/library/calvincsledvenv"
+set -gx VIRTUAL_ENV "/Users/enginturan/Desktop/math/library/calvincsledvenv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
