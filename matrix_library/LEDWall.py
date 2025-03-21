@@ -58,3 +58,5 @@ class LEDProgram:
     def exit(self):
         self.running = False
         self.controller.stop()
+        self.canvas.clear()
+        exit()
