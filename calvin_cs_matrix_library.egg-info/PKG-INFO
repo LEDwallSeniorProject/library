@@ -1,0 +1,13 @@
+Metadata-Version: 2.1
+Name: calvin-cs-matrix-library
+Version: 1.0.0
+Summary: A Python library for use of Computer Science Department at Calvin University's matrix LED display
+Home-page: https://github.com/LEDwallSeniorProject/library
+Author: Alex Miller, Ellie Sand, Palmer Ford, Eli Lewis, Yigit Turan, and Professor Chris Wieringa
+Author-email: cpsc-admin@calvin.edu
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.8,<3.12
+
+UNKNOWN
+

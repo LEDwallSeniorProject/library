@@ -1,7 +1,6 @@
 from matplotlib.path import Path
 from matrix_library import utils
 import numpy as np
-import math
 from skimage.draw import polygon, disk
 import os
 
@@ -156,12 +155,12 @@ def get_polygon_vertices(sides: int, radius: float = 1, center: tuple = (0, 0)) 
         raise ValueError("A polygon must have at least 3 sides")
 
     vertices = []
-    angle_step = 2 * math.pi / sides
+    angle_step = 2 * np.pi / sides  #math replaced  by yigit 
 
     for i in range(sides):
         angle = i * angle_step
-        x = center[0] + radius * math.cos(angle)
-        y = center[1] + radius * math.sin(angle)
+        x = center[0] + radius * np.cos(angle)  #mrby
+        y = center[1] + radius * np.sin(angle)  # mrby
         vertices.append((x, y))
 
     return vertices
@@ -263,7 +262,7 @@ class Line(Polygon):
         self.start = start
         self.end = end
         self.thickness = thickness
-        self.length = math.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
+        self.length = np.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2) #mrby
 
         # Calculate the angle of the line
         self.angle = self.calculate_angle()
@@ -289,12 +288,12 @@ class Line(Polygon):
         line2 = (0, 1)
 
         dot_product = line1[0] * line2[0] + line1[1] * line2[1]
-        magnitude_line1 = math.sqrt(line1[0] ** 2 + line1[1] ** 2)
-        magnitude_line2 = math.sqrt(line2[0] ** 2 + line2[1] ** 2)
+        magnitude_line1 = np.sqrt(line1[0] ** 2 + line1[1] ** 2)
+        magnitude_line2 = np.sqrt(line2[0] ** 2 + line2[1] ** 2)
 
         cos_angle = dot_product / (magnitude_line1 * magnitude_line2)
-        angle_rads = math.acos(cos_angle)
-        angle_deg = math.degrees(angle_rads)
+        angle_rads = np.arccos(cos_angle) ##mrby
+        angle_deg = np.degrees(angle_rads)  ##mrby
 
         return angle_deg
 
@@ -331,9 +330,9 @@ class PolygonOutline(Polygon):
 
     def rotate_inner(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
         # Convert angle from degrees to radians
-        angle_radians = math.radians(angle_degrees)
-        cos_angle = math.cos(angle_radians)
-        sin_angle = math.sin(angle_radians)
+        angle_radians = np.radians(angle_degrees) #mrby
+        cos_angle = np.cos(angle_radians) #mrby
+        sin_angle = np.sin(angle_radians) #mrby
 
         rotated_vertices = []
 

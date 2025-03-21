@@ -1,0 +1,7 @@
+numpy
+matplotlib
+pillow
+pygame
+scikit-image
+pynput
+requests
