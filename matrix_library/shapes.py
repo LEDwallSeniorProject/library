@@ -1,8 +1,6 @@
-from matplotlib.path import Path
 from matrix_library import utils
 import numpy as np
 import math
-from skimage.draw import polygon, disk
 import os
 
 # load pygame
@@ -30,12 +28,40 @@ class Polygon:
 
         self.vertices = np.array(vertices)
         self.color = color
-        self.path = Path(self.vertices)
         self.center = self.calculate_center()
 
     def contains_points(self, points: np.ndarray) -> np.ndarray:
-        """Check if the given points are inside the polygon."""
-        return self.path.contains_points(points)
+        """
+        Check if the given points are inside the polygon using NumPy.
+
+        Parameters:
+        - points (np.ndarray): An array of shape (N, 2) with (x, y) coordinates.
+
+        Returns:
+        - mask (np.ndarray): Boolean array where True means the point is inside the polygon.
+        """
+        num_points = points.shape[0]
+        mask = np.zeros(num_points, dtype=bool)
+
+        x_points = points[:, 0]
+        y_points = points[:, 1]
+        x_poly = self.vertices[:, 0]
+        y_poly = self.vertices[:, 1]
+        n = len(self.vertices)
+
+        for i in range(n):
+            j = (i - 1) % n
+            xi, yi = x_poly[i], y_poly[i]
+            xj, yj = x_poly[j], y_poly[j]
+
+            # Check if the horizontal ray from the point intersects the polygon edge
+            intersect = ((yi > y_points) != (yj > y_points)) & (
+                x_points < (xj - xi) * (y_points - yi) / ((yj - yi) + 1e-12) + xi
+            )
+            mask ^= intersect  # Toggle the inside status
+
+        return mask
+
 
     def translate(self, dx: float, dy: float) -> None:
         """
@@ -46,7 +72,6 @@ class Polygon:
         - dy (float): The distance to translate along the y-axis.
         """
         self.vertices += np.array([dx, dy])
-        self.update_path()
         self.center = (self.center[0] + dx, self.center[1] + dy)
 
     def rotate(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
@@ -76,11 +101,12 @@ class Polygon:
             rotated_vertices.append((x_rotated + center[0], y_rotated + center[1]))
 
         self.vertices = np.array(rotated_vertices)
-        self.update_path()
 
-    def update_path(self) -> None:
-        """Update the path of the polygon based on its current vertices."""
-        self.path = Path(self.vertices)
+    #def update_path(self) -> None:
+     #   """Update the path of the polygon based on its current vertices."""
+      #  self.path = Path(self.vertices)
+        # we deleted path , so we dont need to update path , PASS
+
 
     def calculate_center(self) -> tuple:
         """Calculate the centroid of the polygon."""
@@ -111,7 +137,7 @@ class Polygon:
 
     def get_polygon_mask(self, shape: tuple) -> np.ndarray:
         """
-        Create a binary mask for the polygon on a given image shape.
+        Create a binary mask for the polygon on a given image shape using only NumPy.
 
         Parameters:
         - shape (tuple): The shape of the image (height, width).
@@ -119,10 +145,44 @@ class Polygon:
         Returns:
         - mask (numpy.ndarray): A binary mask with the polygon filled in.
         """
-        rr, cc = polygon(self.vertices[:, 1], self.vertices[:, 0], shape=shape)
-        mask = np.zeros(shape, dtype=bool)
-        mask[rr, cc] = True
+        height, width = shape
+        mask = np.zeros((height, width), dtype=bool)
+
+        vertices = self.vertices.astype(float)
+        x_poly = vertices[:, 0]
+        y_poly = vertices[:, 1]
+
+        # Limit computation to the polygon's bounding box
+        min_x = max(0, int(np.floor(x_poly.min())))
+        max_x = min(width - 1, int(np.ceil(x_poly.max())))
+        min_y = max(0, int(np.floor(y_poly.min())))
+        max_y = min(height - 1, int(np.ceil(y_poly.max())))
+
+        # Generate coordinates within the bounding box
+        y_coords, x_coords = np.meshgrid(np.arange(min_y, max_y + 1), np.arange(min_x, max_x + 1), indexing='ij')
+        x_points = x_coords.ravel()
+        y_points = y_coords.ravel()
+
+        # Vectorized ray casting algorithm
+        num_vertices = len(vertices)
+        inside = np.zeros(x_points.shape, dtype=bool)
+
+        for i in range(num_vertices):
+            j = (i - 1) % num_vertices
+            xi, yi = x_poly[i], y_poly[i]
+            xj, yj = x_poly[j], y_poly[j]
+
+            # Check for edge crossings
+            intersect = ((yi > y_points) != (yj > y_points)) & (
+                x_points < (xj - xi) * (y_points - yi) / ((yj - yi) + 1e-12) + xi
+            )
+            inside ^= intersect  # Toggle the inside status using XOR
+
+        # Set mask values to True where the points are inside the polygon
+        mask[y_points, x_points] = inside
         return mask
+
+
 
     def get_center(self) -> tuple:
         # Initialize sums for x and y coordinates
@@ -185,12 +245,13 @@ class Circle:
         self.center = np.array(center)
         self.radius = radius
         self.color = color
-        self.path = self.create_path()
 
-    def create_path(self) -> Path:
-        """Create a path representation of the circle."""
-        circle_points = self.get_circle_points()
-        return Path(circle_points)
+    #def create_path(self) -> Path:
+      #  """Create a path representation of the circle."""
+       # circle_points = self.get_circle_points()
+        #return Path(circle_points)
+        #dont need that anymore PASS
+
 
     def get_circle_points(self) -> np.ndarray:
         """Get points on the circle's perimeter."""
@@ -213,7 +274,6 @@ class Circle:
         - dy (float): The distance to translate along the y-axis.
         """
         self.center += np.array([int(dx), int(dy)])
-        self.path = self.create_path()
 
     def rotate(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
         """
@@ -229,7 +289,7 @@ class Circle:
 
     def get_circle_mask(self, shape: tuple) -> np.ndarray:
         """
-        Create a binary mask for the circle on a given image shape.
+        Create a binary mask for the circle on a given image shape using only NumPy.
 
         Parameters:
         - shape (tuple): The shape of the image (height, width).
@@ -237,9 +297,25 @@ class Circle:
         Returns:
         - mask (numpy.ndarray): A binary mask with the circle filled in.
         """
-        rr, cc = disk(self.center.astype(int), self.radius, shape=shape)
-        mask = np.zeros(shape, dtype=bool)
-        mask[rr, cc] = True
+        height, width = shape
+        mask = np.zeros((height, width), dtype=bool)
+
+        # Center and radius
+        cx, cy = self.center
+        radius_sq = self.radius ** 2
+
+        # Define bounding box to limit the area of computation
+        min_x = max(0, int(np.floor(cx - self.radius)))
+        max_x = min(width - 1, int(np.ceil(cx + self.radius)))
+        min_y = max(0, int(np.floor(cy - self.radius)))
+        max_y = min(height - 1, int(np.ceil(cy + self.radius)))
+
+        # Create coordinate grid
+        y, x = np.ogrid[min_y:max_y + 1, min_x:max_x + 1]
+        dist_sq = (x - cx) ** 2 + (y - cy) ** 2
+
+        # Fill mask where distance is within the circle
+        mask[min_y:max_y + 1, min_x:max_x + 1] = dist_sq <= radius_sq
         return mask
 
 
@@ -281,7 +357,6 @@ class Line(Polygon):
 
         self.rotate(-self.angle, self.start)
 
-        self.path = Path(self.vertices)
         self.color = color
 
     def calculate_angle(self):
@@ -327,7 +402,6 @@ class PolygonOutline(Polygon):
 
     def change_inner_vertices(self, inner_vertices) -> None:
         self.inner_vertices = inner_vertices
-        self.path = Path(self.inner_vertices)
 
     def rotate_inner(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
         # Convert angle from degrees to radians
