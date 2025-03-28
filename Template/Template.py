@@ -32,18 +32,14 @@ class Template(LEDWall.LEDProgram):
         # code to make something happen on down here
         pass
 
-    # OPTIONAL FUNCTION
-    # this function will override the __loop__() function
-    # use super().__loop__() if you just want to add code
-    # before the loop begins or after it ends
-    # or write your own looping
-    def __loop__(self):
-        # code here will run once before loop starts
-        super().__loop__()
-        # code here will run once after the loop ends
-        # stop the loop by setting self.running = False
-        # fully exit by calling self.exit()
+    # code defined here will run before the main loop begins 
+    #   but after all init is done
+    def preLoop(self):
+        pass
 
+    # this code runs after the loop has run
+    def postLoop(self):
+        pass
 
 # every program needs this line
 if __name__ == "__main__":

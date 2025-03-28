@@ -1,6 +1,5 @@
 import time
 
-
 class LEDProgram:
     def __init__(self, canvas, controller):
         self.canvas = canvas
@@ -10,6 +9,8 @@ class LEDProgram:
             self.__bind_controls__
             self.__draw__
             self.__loop__
+            self.preLoop
+            self.postLoop
             self.__unbind_controls__
             self.exit
 
@@ -19,6 +20,15 @@ class LEDProgram:
             Required functions:
                 self.__bind_controls__
                 self.__draw__
+            
+            Optional functions:
+                self.preLoop
+                self.postLoop
+            
+            Overridable functions: 
+                self.__unbind_controls__
+                self.__loop__
+                self.exit
             """
             raise Exception(error) from e
 
@@ -33,6 +43,7 @@ class LEDProgram:
 
     def __loop__(self):
 
+        self.preLoop()
         last_time = time.time()
         fps = 60
         frame_time = 1 / fps
@@ -49,7 +60,10 @@ class LEDProgram:
                 self.canvas.clear()
                 self.__draw__()
                 self.canvas.draw()
+            else:
+                time.sleep(.001)
 
+        self.postLoop()
         self.__unbind_controls__()
 
     def __unbind_controls__(self):
@@ -60,3 +74,9 @@ class LEDProgram:
         self.controller.stop()
         self.canvas.clear()
         exit()
+
+    def preLoop(self):
+        pass
+
+    def postLoop(self):
+        pass
