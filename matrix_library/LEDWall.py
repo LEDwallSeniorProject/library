@@ -31,7 +31,9 @@ class LEDProgram:
                 self.stop
 
             Attributes:
-                self.running # set to false to exit
+                self.running # set to False to exit
+                self.__fps__ # set to set fps for loop, otherwise 60
+                self.__exited__ # set to True to fully exit python
             """
             raise Exception(error) from e
 
@@ -49,8 +51,8 @@ class LEDProgram:
 
         self.preLoop()
         last_time = time.time()
-        fps = 60
-        frame_time = 1 / fps
+        self.__fps__ = self.__fps__ if self.__fps__ else 60
+        frame_time = 1 / self.__fps__
         frames = 0
 
         while self.running:
