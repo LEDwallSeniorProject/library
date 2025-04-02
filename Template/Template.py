@@ -20,16 +20,6 @@ class Template(LEDWall.LEDProgram):
     # this function will run once at super().__init__()
     # and should contain mappings to control the program
     def __bind_controls__(self):
-        self.controller.add_function("UP", self.goUp)
-        self.controller.add_function("DOWN", self.goDown)
-
-    # controls map to functions
-    def goUp(self):
-        # code to make something happen on up here
-        pass
-
-    def goDown(self):
-        # code to make something happen on down here
         pass
 
     # code defined here will run before the main loop begins 

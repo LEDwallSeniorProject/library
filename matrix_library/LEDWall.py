@@ -29,12 +29,15 @@ class LEDProgram:
                 self.__unbind_controls__
                 self.__loop__
                 self.stop
+
+            Attributes:
+                self.running # set to false to exit
             """
             raise Exception(error) from e
 
         self.__bind_controls__()
         self.running = True
-        self.exited = False
+        self.__exited__ = False
         self.__loop__()
 
     """
@@ -74,7 +77,7 @@ class LEDProgram:
         self.controller.stop()
         self.canvas.clear()
         self.running = False
-        self.exited = True
+        self.__exited__ = True
 
     def preLoop(self):
         pass
