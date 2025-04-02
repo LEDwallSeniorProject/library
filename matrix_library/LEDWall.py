@@ -1,7 +1,7 @@
 import time
 
 class LEDProgram:
-    def __init__(self, canvas, controller):
+    def __init__(self, canvas, controller, fps=60):
         self.canvas = canvas
         self.controller = controller
         # check that things are defined correctly
@@ -28,18 +28,19 @@ class LEDProgram:
             Overridable functions: 
                 self.__unbind_controls__
                 self.__loop__
-                self.stop
+                self.stop # call this to fully exit python
 
             Attributes:
                 self.running # set to False to exit
-                self.__fps__ # set to set fps for loop, otherwise 60
-                self.__exited__ # set to True to fully exit python
             """
             raise Exception(error) from e
 
         self.__bind_controls__()
         self.running = True
         self.__exited__ = False
+
+        self.__fps__ = fps
+
         self.__loop__()
 
     """
@@ -51,7 +52,6 @@ class LEDProgram:
 
         self.preLoop()
         last_time = time.time()
-        self.__fps__ = self.__fps__ if self.__fps__ else 60
         frame_time = 1 / self.__fps__
         frames = 0
 
