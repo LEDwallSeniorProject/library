@@ -49,7 +49,6 @@ class LEDProgram:
     """
 
     def __loop__(self):
-
         self.preLoop()
         last_time = time.time()
         frame_time = 1 / self.__fps__
@@ -59,15 +58,17 @@ class LEDProgram:
             current_time = time.time()
             elapsed_time = current_time - last_time
 
-            if elapsed_time > frame_time:
-                last_time = current_time
-                frames += 1
-
-                self.canvas.clear()
-                self.__draw__()
-                self.canvas.draw()
-            else:
+            while elapsed_time < frame_time:
+                current_time = time.time()
+                elapsed_time = current_time - last_time
                 time.sleep(.001)
+
+            last_time = current_time
+            frames += 1
+
+            self.canvas.clear()
+            self.__draw__()
+            self.canvas.draw()
 
         self.postLoop()
         self.__unbind_controls__()
