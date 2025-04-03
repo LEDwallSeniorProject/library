@@ -19,8 +19,12 @@ class Template(LEDWall.LEDProgram):
     # REQUIRED FUNCTION
     # this function will run once at super().__init__()
     # and should contain mappings to control the program
+    # use SELECT to quit to remain consistent accross games
     def __bind_controls__(self):
-        pass
+        self.controller.add_function("SELECT", self.quit)
+
+    def quit(self):
+        self.running = False
 
     # code defined here will run before the main loop begins 
     #   but after all init is done

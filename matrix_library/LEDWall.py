@@ -12,7 +12,8 @@ class LEDProgram:
             self.preLoop
             self.postLoop
             self.__unbind_controls__
-            self.stop
+            self.quit
+            self.__stop__
 
         except AttributeError as e:
             error = """
@@ -28,7 +29,8 @@ class LEDProgram:
             Overridable functions: 
                 self.__unbind_controls__
                 self.__loop__
-                self.stop # call this to fully exit python
+                self.quit  # call or overide this to exit your program
+                self.__stop__ # call this to fully exit python
 
             Attributes:
                 self.running # set to False to exit
@@ -76,7 +78,10 @@ class LEDProgram:
     def __unbind_controls__(self):
         self.controller.clear()
 
-    def stop(self):
+    def quit(self):
+        self.running = False
+
+    def __stop__(self):
         self.controller.stop()
         self.canvas.clear()
         self.running = False
