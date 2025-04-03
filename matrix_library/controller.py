@@ -239,6 +239,8 @@ class Controller:
     def clear(self):
         if mode == "workstation":
             self.execution_map = {}
+        else:
+            self.function_map = {}
 
 
 class Workstation_listener:
