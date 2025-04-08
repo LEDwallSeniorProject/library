@@ -39,16 +39,13 @@ if re.search("armv|aarch64", platform.machine()) and re.search(
     "csledpi", platform.node()
 ):
     import asyncio, evdev
-
     mode = "board"
     logging.debug(mode)
 
 else:
     import pynput, pygame
-
     mode = "workstation"
     logging.debug(mode)
-
 
 class Controller:
     def __init__(self, debug=False):
@@ -146,7 +143,6 @@ class Controller:
                 "SELECT2": "m",
                 "START2": ".",
             }
-
         # debug output
         logging.debug(self.button_map)
 

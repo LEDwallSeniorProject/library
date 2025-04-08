@@ -2,7 +2,7 @@ import time
 from matrix_library import shapes
 
 class LEDProgram:
-    def __init__(self, canvas, controller, fps=60, trackFPS=False):
+    def __init__(self, canvas, controller, fps=30, trackFPS=False):
         self.canvas = canvas
         self.controller = controller
         # check that things are defined correctly
