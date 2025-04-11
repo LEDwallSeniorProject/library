@@ -96,10 +96,8 @@ class LEDProgram:
                 elif (max_fps - avg_fps) > 3:
                     expected_frame_time -= max_frame_time * 0.01
                 
+        self.__unbind_controls__()   
         self.postLoop()
-        self.__unbind_controls__()
-
-       
 
     def __unbind_controls__(self):
         self.controller.clear()
