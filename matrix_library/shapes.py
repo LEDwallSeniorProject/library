@@ -1,8 +1,6 @@
-from matplotlib.path import Path
 from matrix_library import utils
 import numpy as np
 import math
-from skimage.draw import polygon, disk
 import os
 
 # load pygame
@@ -30,12 +28,74 @@ class Polygon:
 
         self.vertices = np.array(vertices)
         self.color = color
-        self.path = Path(self.vertices)
         self.center = self.calculate_center()
+        
+        # Precompute bounding box for faster contains_points
+        self._update_bounds()
+
+    def _update_bounds(self):
+        """Update bounding box for faster point containment checks"""
+        self.x_min = np.min(self.vertices[:, 0])
+        self.x_max = np.max(self.vertices[:, 0])
+        self.y_min = np.min(self.vertices[:, 1])
+        self.y_max = np.max(self.vertices[:, 1])
 
     def contains_points(self, points: np.ndarray) -> np.ndarray:
-        """Check if the given points are inside the polygon."""
-        return self.path.contains_points(points)
+        """
+        Check if the given points are inside the polygon using NumPy.
+
+        Parameters:
+        - points (np.ndarray): An array of shape (N, 2) with (x, y) coordinates.
+
+        Returns:
+        - mask (np.ndarray): Boolean array where True means the point is inside the polygon.
+        """
+        # Quick bounding box test to eliminate obvious non-containment
+        valid_mask = (
+            (points[:, 0] >= self.x_min) &
+            (points[:, 0] <= self.x_max) &
+            (points[:, 1] >= self.y_min) &
+            (points[:, 1] <= self.y_max)
+        )
+        
+        if not np.any(valid_mask):
+            return np.zeros(points.shape[0], dtype=bool)
+        
+        # Only process points inside the bounding box
+        filtered_points = points[valid_mask]
+        
+        # Ray casting algorithm vectorized
+        mask = np.zeros(filtered_points.shape[0], dtype=bool)
+        
+        x_points = filtered_points[:, 0]
+        y_points = filtered_points[:, 1]
+        x_poly = self.vertices[:, 0]
+        y_poly = self.vertices[:, 1]
+        n = len(self.vertices)
+        
+        # Vectorized ray-casting algorithm
+        for i in range(n):
+            j = (i - 1) % n
+            xi, yi = x_poly[i], y_poly[i]
+            xj, yj = x_poly[j], y_poly[j]
+            
+            # Avoid division by zero
+            valid_edge = yi != yj
+            if not valid_edge:
+                continue
+                
+            # Check if the horizontal ray from the point intersects with this edge
+            intersect = ((yi > y_points) != (yj > y_points)) & (
+                x_points < (xj - xi) * (y_points - yi) / (yj - yi + 1e-12) + xi
+            )
+            
+            # Toggle the inside status
+            mask ^= intersect
+        
+        # Map results back to original points array
+        result = np.zeros(points.shape[0], dtype=bool)
+        result[valid_mask] = mask
+        return result
 
     def translate(self, dx: float, dy: float) -> None:
         """
@@ -46,41 +106,34 @@ class Polygon:
         - dy (float): The distance to translate along the y-axis.
         """
         self.vertices += np.array([dx, dy])
-        self.update_path()
         self.center = (self.center[0] + dx, self.center[1] + dy)
+        self._update_bounds()
 
-    def rotate(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
+    def rotate(self, angle_degrees: float, center: tuple = None) -> None:
         """
         Rotate the polygon by a specified angle around a given center.
 
         Parameters:
         - angle_degrees (float): The angle by which to rotate the polygon (in degrees).
-        - center (tuple, optional): The center of rotation (default is (0, 0)).
+        - center (tuple, optional): The center of rotation (default is the polygon center).
         """
+        if center is None:
+            center = self.center
+            
         angle_radians = np.radians(angle_degrees)
         cos_angle = np.cos(angle_radians)
         sin_angle = np.sin(angle_radians)
-
-        # Rotate each vertex
-        rotated_vertices = []
-        for x, y in self.vertices:
-            # Translate point to origin
-            x_translated = x - center[0]
-            y_translated = y - center[1]
-
-            # Apply rotation
-            x_rotated = x_translated * cos_angle - y_translated * sin_angle
-            y_rotated = x_translated * sin_angle + y_translated * cos_angle
-
-            # Translate point back
-            rotated_vertices.append((x_rotated + center[0], y_rotated + center[1]))
-
-        self.vertices = np.array(rotated_vertices)
-        self.update_path()
-
-    def update_path(self) -> None:
-        """Update the path of the polygon based on its current vertices."""
-        self.path = Path(self.vertices)
+        
+        # Vectorized rotation
+        translated = self.vertices - np.array(center)
+        rotation_matrix = np.array([
+            [cos_angle, -sin_angle],
+            [sin_angle, cos_angle]
+        ])
+        rotated = np.dot(translated, rotation_matrix.T)
+        self.vertices = rotated + np.array(center)
+        
+        self._update_bounds()
 
     def calculate_center(self) -> tuple:
         """Calculate the centroid of the polygon."""
@@ -88,30 +141,15 @@ class Polygon:
         if n < 3:
             raise ValueError("A polygon must have at least 3 vertices.")
 
-        cx, cy = 0.0, 0.0
-        area = 0.0
-
-        # Calculate the signed area and centroid
-        for i in range(n):
-            x1, y1 = self.vertices[i]
-            x2, y2 = self.vertices[(i + 1) % n]
-            a = x1 * y2 - x2 * y1
-            area += a
-            cx += (x1 + x2) * a
-            cy += (y1 + y2) * a
-
-        area *= 0.5
-        if area == 0:
-            raise ValueError("Area of the polygon is zero.")
-
-        cx /= 6 * area
-        cy /= 6 * area
-
+        # Simple centroid calculation for faster performance
+        cx = np.mean(self.vertices[:, 0])
+        cy = np.mean(self.vertices[:, 1])
+        
         return (cx, cy)
 
     def get_polygon_mask(self, shape: tuple) -> np.ndarray:
         """
-        Create a binary mask for the polygon on a given image shape.
+        Create a binary mask for the polygon on a given image shape using only NumPy.
 
         Parameters:
         - shape (tuple): The shape of the image (height, width).
@@ -119,25 +157,41 @@ class Polygon:
         Returns:
         - mask (numpy.ndarray): A binary mask with the polygon filled in.
         """
-        rr, cc = polygon(self.vertices[:, 1], self.vertices[:, 0], shape=shape)
-        mask = np.zeros(shape, dtype=bool)
-        mask[rr, cc] = True
+        height, width = shape
+        mask = np.zeros((height, width), dtype=bool)
+
+        # Limit computation to the polygon's bounding box
+        min_x = max(0, int(np.floor(self.x_min)))
+        max_x = min(width - 1, int(np.ceil(self.x_max)))
+        min_y = max(0, int(np.floor(self.y_min)))
+        max_y = min(height - 1, int(np.ceil(self.y_max)))
+        
+        # Skip if polygon is outside the image
+        if min_x >= width or max_x < 0 or min_y >= height or max_y < 0:
+            return mask
+
+        # Generate coordinates within the bounding box
+        y_coords, x_coords = np.meshgrid(
+            np.arange(min_y, max_y + 1), 
+            np.arange(min_x, max_x + 1), 
+            indexing='ij'
+        )
+        
+        # Reshape for point containment
+        points = np.column_stack((x_coords.ravel(), y_coords.ravel()))
+        
+        # Get containment mask and reshape to bounding box
+        inside = self.contains_points(points)
+        box_mask = inside.reshape((max_y - min_y + 1, max_x - min_x + 1))
+        
+        # Update the main mask
+        mask[min_y:max_y+1, min_x:max_x+1] = box_mask
+        
         return mask
 
     def get_center(self) -> tuple:
-        # Initialize sums for x and y coordinates
-        sum_x = sum_y = 0
-
-        # Loop through each vertex (assumed as a tuple (x, y))
-        for x, y in self.vertices:
-            sum_x += x
-            sum_y += y
-
-        # Calculate the averages of the x and y coordinates
-        centroid_x = sum_x / len(self.vertices)
-        centroid_y = sum_y / len(self.vertices)
-
-        return (centroid_x, centroid_y)
+        """Get the polygon center as a tuple."""
+        return self.center
 
 
 def get_polygon_vertices(sides: int, radius: float = 1, center: tuple = (0, 0)) -> list:
@@ -155,22 +209,16 @@ def get_polygon_vertices(sides: int, radius: float = 1, center: tuple = (0, 0)) 
     if sides < 3:
         raise ValueError("A polygon must have at least 3 sides")
 
-    vertices = []
-    angle_step = 2 * math.pi / sides
-
-    for i in range(sides):
-        angle = i * angle_step
-        x = center[0] + radius * math.cos(angle)
-        y = center[1] + radius * math.sin(angle)
-        vertices.append((x, y))
-
-    return vertices
+    # Vectorized vertex calculation
+    angles = np.linspace(0, 2 * np.pi, sides, endpoint=False)
+    x = center[0] + radius * np.cos(angles)
+    y = center[1] + radius * np.sin(angles)
+    
+    return list(zip(x, y))
 
 
 class Circle:
-    def __init__(
-        self, radius: float, center: tuple, color: tuple = (255, 255, 255)
-    ) -> None:
+    def __init__(self, radius: float, center: tuple, color: tuple = (255, 255, 255)) -> None:
         """
         Initializes a Circle object with the given center, radius, and color.
 
@@ -185,12 +233,9 @@ class Circle:
         self.center = np.array(center)
         self.radius = radius
         self.color = color
-        self.path = self.create_path()
-
-    def create_path(self) -> Path:
-        """Create a path representation of the circle."""
-        circle_points = self.get_circle_points()
-        return Path(circle_points)
+        
+        # Precompute for faster contains_points
+        self.radius_squared = radius * radius
 
     def get_circle_points(self) -> np.ndarray:
         """Get points on the circle's perimeter."""
@@ -201,8 +246,34 @@ class Circle:
 
     def contains_points(self, points: np.ndarray) -> np.ndarray:
         """Check if the given points are inside the circle."""
-        distances = np.linalg.norm(points - self.center, axis=1)
-        return distances <= self.radius
+        # Quick bounds check
+        x_min, y_min = self.center - self.radius
+        x_max, y_max = self.center + self.radius
+        
+        valid_mask = (
+            (points[:, 0] >= x_min) &
+            (points[:, 0] <= x_max) &
+            (points[:, 1] >= y_min) &
+            (points[:, 1] <= y_max)
+        )
+        
+        if not np.any(valid_mask):
+            return np.zeros(points.shape[0], dtype=bool)
+        
+        # Vectorized distance calculation - only for points in bounding box
+        filtered_points = points[valid_mask]
+        
+        # Faster squared distance calculation without square root
+        dx = filtered_points[:, 0] - self.center[0]
+        dy = filtered_points[:, 1] - self.center[1]
+        distances_squared = dx*dx + dy*dy
+        
+        inside_mask = distances_squared <= self.radius_squared
+        
+        # Map results back to original points array
+        result = np.zeros(points.shape[0], dtype=bool)
+        result[valid_mask] = inside_mask
+        return result
 
     def translate(self, dx: float, dy: float) -> None:
         """
@@ -213,7 +284,6 @@ class Circle:
         - dy (float): The distance to translate along the y-axis.
         """
         self.center += np.array([int(dx), int(dy)])
-        self.path = self.create_path()
 
     def rotate(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
         """
@@ -223,13 +293,12 @@ class Circle:
         - angle_degrees (float): The angle by which to rotate the circle (in degrees).
         - center (tuple, optional): The center of rotation (default is (0, 0)).
         """
-        # Rotating a circle around its center does not change its shape
-        # This method is included for consistency with the Polygon class
+        # For consistency with Polygon class, but rotation doesn't change a circle
         pass
 
     def get_circle_mask(self, shape: tuple) -> np.ndarray:
         """
-        Create a binary mask for the circle on a given image shape.
+        Create a binary mask for the circle on a given image shape using only NumPy.
 
         Parameters:
         - shape (tuple): The shape of the image (height, width).
@@ -237,20 +306,33 @@ class Circle:
         Returns:
         - mask (numpy.ndarray): A binary mask with the circle filled in.
         """
-        rr, cc = disk(self.center.astype(int), self.radius, shape=shape)
-        mask = np.zeros(shape, dtype=bool)
-        mask[rr, cc] = True
+        height, width = shape
+        mask = np.zeros((height, width), dtype=bool)
+
+        # Define bounding box to limit the area of computation
+        min_x = max(0, int(np.floor(self.center[0] - self.radius)))
+        max_x = min(width - 1, int(np.ceil(self.center[0] + self.radius)))
+        min_y = max(0, int(np.floor(self.center[1] - self.radius)))
+        max_y = min(height - 1, int(np.ceil(self.center[1] + self.radius)))
+        
+        # Skip if circle is outside the image
+        if min_x >= width or max_x < 0 or min_y >= height or max_y < 0:
+            return mask
+
+        # Create coordinate grid
+        y, x = np.ogrid[min_y:max_y + 1, min_x:max_x + 1]
+        
+        # Faster squared distance calculation
+        dist_sq = (x - self.center[0]) ** 2 + (y - self.center[1]) ** 2
+
+        # Fill mask where distance is within the circle
+        mask[min_y:max_y + 1, min_x:max_x + 1] = dist_sq <= self.radius_squared
+        
         return mask
 
 
 class Line(Polygon):
-    def __init__(
-        self,
-        start: list,
-        end: list,
-        color: list = (255, 255, 255),
-        thickness: float = 0.5,
-    ) -> None:
+    def __init__(self, start: list, end: list, color: list = (255, 255, 255), thickness: float = 0.5) -> None:
         if start == end:
             raise ValueError("The start and end points of a line cannot be the same.")
         elif thickness <= 0:
@@ -260,31 +342,35 @@ class Line(Polygon):
         elif len(color) != 3:
             raise ValueError("The color must be a list of length 3.")
 
-        self.start = start
-        self.end = end
+        self.start = np.array(start)
+        self.end = np.array(end)
         self.thickness = thickness
+        
+        # Calculate length and angle more efficiently
+        dx = end[0] - start[0]
+        dy = end[1] - start[1]
         self.length = math.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
-
+        
         # Calculate the angle of the line
         self.angle = self.calculate_angle()
-        self.end = [self.start[0], self.start[1] + self.length]
+        temp_end = [self.start[0], self.start[1] + self.length]
 
         verts1 = [self.start[0] + self.thickness, self.start[1] + self.thickness]
         verts2 = [self.start[0] + self.thickness, self.start[1] - self.thickness]
         verts3 = [self.start[0] - self.thickness, self.start[1] - self.thickness]
         verts4 = [self.start[0] - self.thickness, self.start[1] + self.thickness]
-        verts5 = [self.end[0] - self.thickness, self.end[1] - self.thickness]
-        verts6 = [self.end[0] - self.thickness, self.end[1] + self.thickness]
-        verts7 = [self.end[0] + self.thickness, self.end[1] + self.thickness]
-        verts8 = [self.end[0] + self.thickness, self.end[1] - self.thickness]
+        verts5 = [temp_end[0] - self.thickness, temp_end[1] - self.thickness]
+        verts6 = [temp_end[0] - self.thickness, temp_end[1] + self.thickness]
+        verts7 = [temp_end[0] + self.thickness, temp_end[1] + self.thickness]
+        verts8 = [temp_end[0] + self.thickness, temp_end[1] - self.thickness]
         self.vertices = [verts1, verts2, verts3, verts4, verts5, verts6, verts7, verts8]
-
+        
+        # Create polygon and then rotate
+        super().__init__(self.vertices, color)
         self.rotate(-self.angle, self.start)
 
-        self.path = Path(self.vertices)
-        self.color = color
-
     def calculate_angle(self):
+        """Calculate angle between line and positive y-axis"""
         line1 = (self.end[0] - self.start[0], self.end[1] - self.start[1])
         line2 = (0, 1)
 
@@ -293,17 +379,14 @@ class Line(Polygon):
         magnitude_line2 = math.sqrt(line2[0] ** 2 + line2[1] ** 2)
 
         cos_angle = dot_product / (magnitude_line1 * magnitude_line2)
-        angle_rads = math.acos(cos_angle)
+        angle_rads = math.acos(min(max(cos_angle, -1.0), 1.0))  # Clamp to avoid numerical issues
         angle_deg = math.degrees(angle_rads)
 
         return angle_deg
 
 
-# TODO: Implement PolygonOutline class features
 class PolygonOutline(Polygon):
-    def __init__(
-        self, vertices: tuple, color: tuple = (255, 255, 255), thickness: float = 1
-    ) -> None:
+    def __init__(self, vertices: tuple, color: tuple = (255, 255, 255), thickness: float = 1) -> None:
         """
         Initializes a PolygonOutline object with the given vertices, color, and thickness.
 
@@ -315,19 +398,26 @@ class PolygonOutline(Polygon):
         self.vertices = vertices
         self.color = color
         self.thickness = thickness
-        self.center = self.get_center()
+        
+        # Calculate center first using the vertices
+        sum_x = sum(v[0] for v in vertices)
+        sum_y = sum(v[1] for v in vertices)
+        self.center = (sum_x / len(vertices), sum_y / len(vertices))
+        
+        # Now that self.center exists, calculate inner vertices
+        inner_radius = max(self.distance(
+            self.center[0], self.center[1], self.vertices[0][0], self.vertices[0][1]
+        ) - thickness, 0.1)
+        
         self.inner_vertices = get_polygon_vertices(
-            len(self.vertices),
-            self.distance(
-                self.center[0], self.center[1], self.vertices[0][0], self.vertices[0][1]
-            )
-            - self.thickness,
-            self.center,
+            len(self.vertices), inner_radius, self.center
         )
+        
+        # Initialize as polygon for inheritance
+        super().__init__(vertices, color)
 
     def change_inner_vertices(self, inner_vertices) -> None:
         self.inner_vertices = inner_vertices
-        self.path = Path(self.inner_vertices)
 
     def rotate_inner(self, angle_degrees: float, center: tuple = (0, 0)) -> None:
         # Convert angle from degrees to radians
@@ -382,51 +472,67 @@ class CircleOutline(PolygonOutline):
         - color (tuple, optional): The RGB color values of the circle outline. Defaults to (255, 255, 255).
         - thickness (float, optional): The thickness of the circle outline. Defaults to 1.
         """
-        vertices = get_polygon_vertices(radius * 10, radius, center)
+        # Create many-sided polygon to approximate circle
+        num_points = max(int(radius * 4), 24)  # Increase for smoother circles
+        vertices = get_polygon_vertices(num_points, radius, center)
         super().__init__(vertices, color, thickness)
         self.radius = radius
+        self.center = center
+        
+        # Precompute squared radii for faster contains_points
+        self.outer_radius_squared = radius * radius
+        self.inner_radius = max(radius - thickness, 0.1)  # Prevent negative radius
+        self.inner_radius_squared = self.inner_radius * self.inner_radius
 
     def contains_points(self, points: np.ndarray):
-        mask = np.zeros(len(points), dtype=bool)
-
-        circle1_mask = Circle(self.radius, self.center, self.color).contains_points(
-            points
-        )
-        circle2_mask = Circle(
-            self.radius - self.thickness, self.center, self.color
-        ).contains_points(points)
-
-        mask = np.logical_and(circle1_mask, np.logical_not(circle2_mask))
-        return mask
+        # More efficient implementation using distance calculation
+        # instead of constructing temporary circles
+        distances = np.sqrt(np.sum((points - self.center) ** 2, axis=1))
+        
+        # Points must be within outer radius but outside inner radius
+        return (distances <= self.radius) & (distances > self.inner_radius)
 
 
 class Phrase:
-    def __init__(
-        self,
-        text: str,
-        position: list = [0, 0],
-        color: list = [255, 255, 255],
-        size: int = 1,
-        auto_newline: bool = False,
-    ):
+    def __init__(self, text: str, position: list = [0, 0], color: list = [255, 255, 255], size: int = 1, auto_newline: bool = False):
         self.text: str = text
         self.position: list = list(position)
         self.color = color
         self.auto_newline = auto_newline
         self.size: int = size
         self.letters = self.get_letters()
+        
+        # Precompute bounds for faster checks
+        self._update_bounds()
+        
+    def _update_bounds(self):
+        """Calculate phrase bounds for faster containment checks"""
+        if not self.letters:
+            self.x_min = self.position[0]
+            self.y_min = self.position[1]
+            self.x_max = self.position[0] + len(self.text) * 8 * self.size
+            self.y_max = self.position[1] + 8 * self.size
+            return
+            
+        self.x_min = min(letter.position[0] for letter in self.letters)
+        self.y_min = min(letter.position[1] for letter in self.letters)
+        self.x_max = max(letter.position[0] + 8 * letter.size for letter in self.letters)
+        self.y_max = max(letter.position[1] + 8 * letter.size for letter in self.letters)
 
     def set_text(self, text: str):
         """Only update letters for characters that have changed."""
         if text != self.text:
             self.update_letters(text)
-        self.text = text
+            self.text = text
+            self._update_bounds()
 
     def set_position(self, position: list):
         """Only update letters if the position has changed."""
         if position != self.position:
+            dx = position[0] - self.position[0]
+            dy = position[1] - self.position[1]
             self.position = position
-            self.update_positions()
+            self.translate(dx, dy)
 
     def get_width(self):
         return sum([letter.get_width() for letter in self.letters])
@@ -436,6 +542,12 @@ class Phrase:
             letter.translate(dx, dy)
         self.position[0] += dx
         self.position[1] += dy
+        
+        # Update bounds
+        self.x_min += dx
+        self.x_max += dx
+        self.y_min += dy
+        self.y_max += dy
 
     def get_letters(self):
         """Initial creation of the letters based on the text and position."""
@@ -459,8 +571,11 @@ class Phrase:
                 y += 8 * self.size
             if i < len(self.letters):
                 # Reuse the existing letter and update its character if needed
-                self.letters[i].set_char(char)
-                new_letters.append(self.letters[i])
+                letter = self.letters[i]
+                if letter.char != char:
+                    letter.set_char(char)
+                letter.set_position([x, y])
+                new_letters.append(letter)
             else:
                 # Create a new letter if this is beyond the current letters list
                 new_letters.append(Letter(char, [x, y], self.color, size=self.size))
@@ -480,10 +595,32 @@ class Phrase:
                 y += 8 * self.size
 
     def contains_points(self, points: np.ndarray):
-        mask = np.zeros(len(points), dtype=bool)
-        for i, letter in enumerate(self.letters):
-            mask |= letter.contains_points(points)
-        return mask
+        """Optimized containment check with bounding box"""
+        # Quick bounds check
+        valid_mask = (
+            (points[:, 0] >= self.x_min) &
+            (points[:, 0] <= self.x_max) &
+            (points[:, 1] >= self.y_min) &
+            (points[:, 1] <= self.y_max)
+        )
+        
+        if not np.any(valid_mask):
+            return np.zeros(len(points), dtype=bool)
+            
+        # Initialize result array
+        result = np.zeros(len(points), dtype=bool)
+        
+        # Check each letter (only for points within phrase bounds)
+        filtered_points = points[valid_mask]
+        filtered_result = np.zeros(len(filtered_points), dtype=bool)
+        
+        for letter in self.letters:
+            letter_result = letter.contains_points(filtered_points)
+            filtered_result = np.logical_or(filtered_result, letter_result)
+            
+        # Map back to full points array
+        result[valid_mask] = filtered_result
+        return result
 
 
 class Pixel:
@@ -491,36 +628,40 @@ class Pixel:
         self.position = position
         self.color = color
         self.scale = scale
+        
+        # Precompute bounds
+        self.x_min = position[0]
+        self.y_min = position[1]
+        self.x_max = position[0] + scale
+        self.y_max = position[1] + scale
 
     def contains_points(self, points: np.ndarray):
-        mask = np.zeros(len(points), dtype=bool)
-        x, y = self.position
-        for i in range(self.scale):
-            for j in range(self.scale):
-                mask |= np.logical_and(
-                    np.logical_and(points[:, 0] >= x + i, points[:, 0] < x + i + 1),
-                    np.logical_and(points[:, 1] >= y + j, points[:, 1] < y + j + 1),
-                )
-        return mask
+        # Quick bounds check
+        valid_mask = (
+            (points[:, 0] >= self.x_min) &
+            (points[:, 0] < self.x_max) &
+            (points[:, 1] >= self.y_min) &
+            (points[:, 1] < self.y_max)
+        )
+        
+        return valid_mask
 
     def translate(self, dx: float, dy: float):
         self.position[0] += dx
         self.position[1] += dy
+        
+        # Update bounds
+        self.x_min += dx
+        self.x_max += dx
+        self.y_min += dy
+        self.y_max += dy
 
     def __str__(self):
         return f"[{self.position[0]},{self.position[1]}] -> ({self.color[0]},{self.color[1]},{self.color[2]})"
 
 
 class ColoredBitMap:
-    def __init__(
-        self,
-        pixels: list,
-        width: int,
-        height: int,
-        position: list = [0, 0],
-        scale: int = 1,
-    ):
-        self.pixels = pixels
+    def __init__(self, pixels: list, width: int, height: int, position: list = [0, 0], scale: int = 1):
         self.position = position
         self.width = width
         self.height = height
@@ -529,22 +670,70 @@ class ColoredBitMap:
 
         for i in range(len(pixels)):
             if pixels[i] != [] and pixels[i] != [None]:  # Skip empty pixels
-                x = (i % width) * scale
-                y = (i // width) * scale
+                x = (i % width) * scale + position[0]
+                y = (i // width) * scale + position[1]
+                self.pixels.append(Pixel([x, y], pixels[i], scale))
+                
+        # Precompute bounds
+        self._update_bounds()
+        
+    def _update_bounds(self):
+        """Calculate bitmap bounds for faster containment checks"""
+        if not self.pixels:
+            self.x_min = self.position[0]
+            self.y_min = self.position[1]
+            self.x_max = self.position[0] + self.width * self.scale
+            self.y_max = self.position[1] + self.height * self.scale
+            return
+            
+        self.x_min = min(pixel.x_min for pixel in self.pixels)
+        self.y_min = min(pixel.y_min for pixel in self.pixels)
+        self.x_max = max(pixel.x_max for pixel in self.pixels)
+        self.y_max = max(pixel.y_max for pixel in self.pixels)
+        
+    def contains_points(self, points: np.ndarray):
+        """Optimized containment check with bounding box"""
+        # Quick bounds check
+        valid_mask = (
+            (points[:, 0] >= self.x_min) &
+            (points[:, 0] <= self.x_max) &
+            (points[:, 1] >= self.y_min) &
+            (points[:, 1] <= self.y_max)
+        )
+        
+        if not np.any(valid_mask):
+            return np.zeros(len(points), dtype=bool)
+            
+        # Check each pixel (only for points within bitmap bounds)
+        result = np.zeros(len(points), dtype=bool)
+        
+        for pixel in self.pixels:
+            pixel_result = pixel.contains_points(points)
+            result = np.logical_or(result, pixel_result)
+            
+        return result
+        
+    def translate(self, dx: float, dy: float):
+        """Move all pixels and update bounds"""
+        for pixel in self.pixels:
+            pixel.translate(dx, dy)
+            
+        self.position[0] += dx
+        self.position[1] += dy
+        
+        # Update bounds
+        if hasattr(self, 'x_min'):
+            self.x_min += dx
+            self.x_max += dx
+            self.y_min += dy
+            self.y_max += dy
 
-                self.pixels.append(Pixel([x, y], pixels[i]))
 
+# Global character cache for Letter class
+char_mask_cache = {}
 
 class BitMap:
-    def __init__(
-        self,
-        pixels: list,
-        width: int,
-        height: int,
-        position: list = [0, 0],
-        color: list = (255, 255, 255),
-        scale: int = 1,
-    ):
+    def __init__(self, pixels: list, width: int, height: int, position: list = [0, 0], color: list = (255, 255, 255), scale: int = 1):
         self.pixels = pixels
         self.position = position
         self.width = width
@@ -555,269 +744,271 @@ class BitMap:
         # Cache for contains_points
         self.cached_points = None
         self.cached_mask = None
-
         self.cached_points_x = None
         self.cached_points_y = None
+        
+        # Precompute important values
+        self._update_bounds()
+        self._precompute_active_pixels()
 
-        # self.empty_array = empty_canvas
+    def _update_bounds(self):
+        """Update bounds for faster containment checks"""
+        self.x_min = self.position[0]
+        self.y_min = self.position[1]
+        self.x_max = self.x_min + self.width * self.scale
+        self.y_max = self.y_min + self.height * self.scale
 
-    def _get_valid_points_mask(self, points: np.ndarray, x_min, y_min, x_max, y_max):
+    def _precompute_active_pixels(self):
+        """Precompute active pixel coordinates for faster containment checks"""
+        # Find indices of active pixels
+        active_indices = np.where(np.array(self.pixels) == 1)[0]
+        
+        # Calculate corresponding x, y coordinates in bitmap space
+        self.active_x = (active_indices % self.width) 
+        self.active_y = (active_indices // self.width)
+        
+        # Save active indices for faster lookups
+        self.active_indices = active_indices
+
+    def _get_valid_points_mask(self, points, x_min, y_min, x_max, y_max):
+        """Helper to check if points are within a bounding box"""
         return (
-            (points[:, 0] >= x_min)
-            & (points[:, 0] < x_max)
-            & (points[:, 1] >= y_min)
-            & (points[:, 1] < y_max)
+            (points[:, 0] >= x_min) &
+            (points[:, 0] < x_max) &
+            (points[:, 1] >= y_min) &
+            (points[:, 1] < y_max)
         )
 
     def contains_points(self, points: np.ndarray):
-
-        # Check bounding box first to eliminate points that are clearly outside
-        x_min = self.position[0]
-        y_min = self.position[1]
-        x_max = x_min + self.width * self.scale
-        y_max = y_min + self.height * self.scale
-
-        # Check if the cached result is still valid
-        if x_min > 128 or y_min > 128 or x_max < 0 or y_max < 0:
-            return empty_canvas
-
-        # Eliminate points outside the bounding box
-        self._get_point_axes(points)
-
+        """Check if points are contained within any active pixels of the bitmap"""
+        # Quick bounding box check
+        if (self.x_min > 128 or self.y_min > 128 or
+            self.x_max < 0 or self.y_max < 0):
+            return np.zeros(points.shape[0], dtype=bool)
+        
+        # Check overall bounding box
         valid_points_mask = self._get_valid_points_mask(
-            points, x_min, y_min, x_max, y_max
+            points, self.x_min, self.y_min, self.x_max, self.y_max
         )
-
-        valid_points = self._compute_valid_points(points, valid_points_mask)
-
-        if valid_points.size == 0:
-            return empty_canvas
-
-        # Proceed with containment checks for valid points
-        result_mask = self._compute_contains_points(valid_points)
-
-        # Fill the original points array with results
-        return self._compute_final_mask(valid_points_mask, result_mask)
-
-    def _compute_valid_points(self, points: np.ndarray, valid_points_mask):
-        # Only process points inside the bounding box
-        return points[valid_points_mask]
-
-    def _compute_final_mask(self, valid_points_mask, result_mask):
-        final_mask = np.zeros(len(valid_points_mask), dtype=bool)
-        final_mask[valid_points_mask] = result_mask
-        return final_mask
-
-    def _compute_contains_points(self, points: np.ndarray):
-        """Computes the point containment using vectorized NumPy operations."""
-        # Generate coordinates for all pixels that are "on" (value = 1)
-        pixel_indices = np.where(np.array(self.pixels) == 1)[0]
-        x_coords = (pixel_indices % self.width) * self.scale + self.position[0]
-        y_coords = (pixel_indices // self.width) * self.scale + self.position[1]
-
-        # Create bounding boxes for each pixel
-        x_min = x_coords[:, None]
-        y_min = y_coords[:, None]
-        x_max = x_min + self.scale
-        y_max = y_min + self.scale
-
-        # Check if points fall within any of the pixel bounding boxes
-
-        mask = np.any(
-            self._get_valid_points_mask(points, x_min, y_min, x_max, y_max),
-            axis=0,
+        
+        if not np.any(valid_points_mask):
+            return np.zeros(points.shape[0], dtype=bool)
+        
+        # Only process potentially valid points
+        valid_points = points[valid_points_mask]
+        
+        # Calculate relative positions in bitmap
+        rel_x = ((valid_points[:, 0] - self.position[0]) / self.scale).astype(int)
+        rel_y = ((valid_points[:, 1] - self.position[1]) / self.scale).astype(int)
+        
+        # Ensure coordinates are in bounds
+        in_bounds = (
+            (rel_x >= 0) & (rel_x < self.width) &
+            (rel_y >= 0) & (rel_y < self.height)
         )
-        return mask
-
-    def _get_point_axes(self, points: np.ndarray):
-        if self.cached_points_x is None or self.cached_points_y is None:
-            self.cached_points_x = points[:, 0]
-            self.cached_points_y = points[:, 1]
-
-        return self.cached_points_x, self.cached_points_y
+        
+        if not np.any(in_bounds):
+            return np.zeros(points.shape[0], dtype=bool)
+            
+        # Calculate indices in bitmap
+        rel_x_in = rel_x[in_bounds]
+        rel_y_in = rel_y[in_bounds]
+        point_indices = rel_y_in * self.width + rel_x_in
+        
+        # Check which points are in active pixels using numpy's isin function
+        mask_in_bounds = np.isin(point_indices, self.active_indices)
+        
+        # Map back to valid points
+        result_valid = np.zeros(valid_points.shape[0], dtype=bool)
+        result_valid[in_bounds] = mask_in_bounds
+        
+        # Map back to all points
+        result = np.zeros(points.shape[0], dtype=bool)
+        result[valid_points_mask] = result_valid
+        
+        return result
 
     def translate(self, dx: float, dy: float):
-        """Translate the position of the bitmap and invalidate cache."""
+        """Translate the bitmap by dx, dy and update cached values"""
         self.position[0] += dx
         self.position[1] += dy
-        self._invalidate_cache()
+        
+        # Update bounds
+        self.x_min += dx
+        self.x_max += dx
+        self.y_min += dy
+        self.y_max += dy
 
     def set_bitmap(self, pixels: list, width: int, height: int):
-        """Update the bitmap with new pixel data, width, and height. Invalidate the cache."""
+        """Update the bitmap with new pixel data"""
         self.pixels = pixels
         self.width = width
         self.height = height
-        self._invalidate_cache()
+        
+        # Update cached values
+        self._update_bounds()
+        self._precompute_active_pixels()
 
     def set_position(self, position: list):
-        """Set a new position for the bitmap and invalidate cache if position changes."""
-        if position != self.position:
-            self.position = position
-            self._invalidate_cache()
-
-    def _invalidate_cache(self):
-        """Invalidates the cached result of contains_points."""
-        self.cached_points = None
-        self.cached_mask = None
-        self.cached_points_x = None
-        self.cached_points_y = None
+        """Set a new position and update cached values"""
+        if position == self.position:
+            return
+            
+        # Calculate delta for translation
+        dx = position[0] - self.position[0]
+        dy = position[1] - self.position[1]
+        
+        self.position = position
+        
+        # Update bounds
+        self.x_min += dx
+        self.x_max += dx
+        self.y_min += dy
+        self.y_max += dy
 
     def _bbox_intersects(self, bbox1, bbox2):
-        """Check if two bounding boxes intersect."""
+        """Check if two bounding boxes intersect"""
         x1_min, y1_min, x1_max, y1_max = bbox1
         x2_min, y2_min, x2_max, y2_max = bbox2
 
         return not (
-            x1_max < x2_min or x1_min > x2_max or y1_max < y2_min or y1_min > y2_max
+            x1_max <= x2_min or x1_min >= x2_max or 
+            y1_max <= y2_min or y1_min >= y2_max
         )
+
 
 class Image(ColoredBitMap):
     def __init__(self, width: int, height: int, position: list = [0, 0], scale: int = 1):
         super().__init__(pixels=[], width=width, height=height, position=position, scale=scale)
 
     def loadfile(self, filename: str):
+        """Load image from file and convert to pixels"""
         if os.path.exists(filename):
             imgsurface = pygame.image.load(filename)
 
             # check to make sure size matches
             if(imgsurface.get_height() != self.height or imgsurface.get_width() != self.width):
-                pygame.transform.scale(imgsurface,(self.width,self.height))
+                imgsurface = pygame.transform.scale(imgsurface,(self.width,self.height))
+            
+            # Clear existing pixels
+            self.pixels = []
             
             # Loop through and make a bitmap of pixels
             for x in range(0,self.width):
                 for y in range(0,self.height):
-                    self.pixels.append(Pixel([x,y], color=tuple(imgsurface.get_at((x,y))[0:3])))
-
+                    pos_x = x * self.scale + self.position[0]
+                    pos_y = y * self.scale + self.position[1]
+                    color = tuple(imgsurface.get_at((x,y))[0:3])
+                    self.pixels.append(Pixel([pos_x, pos_y], color=color, scale=self.scale))
+                    
+            # Update bounds
+            self._update_bounds()
         else:
             print(f"File {filename} does not exist. Try again.")
     
     def loadpixels(self, pixels: list):
-        for i in range(len(pixels)):
-            if pixels[i] != [] and pixels[i] != [None]:  # Skip empty pixels
-                x = (i % self.width) * self.scale
-                y = (i // self.height) * self.scale
+        # Clear existing pixels
+        self.pixels = []
+        
+        # Create new pixels
+        for i, color in enumerate(pixels):
+            if color and color != [None]:  # Skip empty pixels
+                x = (i % self.width) * self.scale + self.position[0]
+                y = (i // self.width) * self.scale + self.position[1]
+                self.pixels.append(Pixel([x, y], color=color, scale=self.scale))
+                
+        # Update bounds
+        self._update_bounds()
 
-                self.pixels.append(Pixel([x, y], color=pixels[i]))
 
 class Letter(BitMap):
-    def __init__(
-        self,
-        char: str,
-        position: list = [0, 0],
-        color: list = [255, 255, 255],
-        size: int = 1,
-    ):
+    def __init__(self, char: str, position: list = [0, 0], color: list = [255, 255, 255], size: int = 1):
+        # Default mask (blank)
         self.char = ""
-        self.mask = [  # Default mask
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-            True,
-            False,
-        ]
-        self.position = position
+        self.mask = [False] * 64
+        self.position = list(position)
         self.color = color
         self.size = size
-
-        # Initialize the character mask and the bitmap
+        
+        # Initialize bitmap with default mask
         super().__init__(self.mask, 8, 8, position, color, size)
-
-        # Set the character
+        
+        # Set the actual character
         self.set_char(char)
 
     def set_char(self, new_char: str):
-        """Update the character and invalidate the cache."""
-        if new_char != self.char:
-            self.char = new_char
-
-            if self.char in utils.char_mask:
-                self.mask = utils.char_mask[self.char]
+        """Update character bitmap if changed"""
+        if new_char == self.char:
+            return
+            
+        self.char = new_char
+        
+        # Use cached mask if available
+        if new_char in char_mask_cache:
+            self.mask = char_mask_cache[new_char]
+        else:
+            # Get from utils or use default pattern
+            if new_char in utils.char_mask:
+                self.mask = utils.char_mask[new_char]
             else:
-                self.mask = [
-                    ((i + j) % 2 == 1) for i in range(8) for j in range(8)
-                ]  # Return a checkered pattern if the character is not found
-                # self.mask = [  # Return a checkered pattern if the character is not found
-                #     False, True, False, True, False, True, False, True,
-                #     True, False, True, False, True, False, True, False,
-                #     False, True, False, True, False, True, False, True,
-                #     True, False, True, False, True, False, True, False,
-                #     False, True, False, True, False, True, False, True,
-                #     True, False, True, False, True, False, True, False,
-                #     False, True, False, True, False, True, False, True,
-                #     True, False, True, False, True, False, True, False,
-                # ]
+                # Checkered pattern for unknown characters
+                self.mask = [((i + j) % 2 == 1) for i in range(8) for j in range(8)]
+                
+            # Cache for future use
+            char_mask_cache[new_char] = self.mask
+            
+        # Update bitmap with new mask
+        self.set_bitmap(self.mask, 8, 8)
 
-            # run_setbitmap
-            self.set_bitmap(self.mask, 8, 8)
+    def contains_points(self, points: np.ndarray):
+        """Optimized letter containment check"""
+        # Use pre-computed bounds from parent class
+        valid_mask = self._get_valid_points_mask(
+            points, self.x_min, self.y_min, self.x_max, self.y_max
+        )
+        
+        if not np.any(valid_mask):
+            return np.zeros(points.shape[0], dtype=bool)
+        
+        # Only process points in bounds
+        valid_points = points[valid_mask]
+        
+        # Calculate relative position in letter grid
+        rel_x = ((valid_points[:, 0] - self.position[0]) / self.size).astype(int)
+        rel_y = ((valid_points[:, 1] - self.position[1]) / self.size).astype(int)
+        
+        # Ensure coordinates are in bounds
+        rel_x = np.clip(rel_x, 0, 7)
+        rel_y = np.clip(rel_y, 0, 7)
+        
+        # Calculate indices in mask array
+        indices = rel_y * 8 + rel_x
+        
+        # Check mask values
+        mask_array = np.array(self.mask)
+        mask_values = mask_array[indices]
+        
+        # Map results back to original points
+        result = np.zeros(points.shape[0], dtype=bool)
+        result[valid_mask] = mask_values
+        
+        return result
 
     def set_position(self, new_position: list):
-        """Update the position and invalidate the cache."""
-        if new_position != self.position:
-            self.position = new_position
+        """Update position"""
+        if new_position == self.position:
+            return
+            
+        # Calculate delta and translate
+        dx = new_position[0] - self.position[0]
+        dy = new_position[1] - self.position[1]
+        self.translate(dx, dy)
 
     def set_color(self, new_color: list):
-        """Update the color and invalidate the cache."""
+        """Update color"""
         if new_color != self.color:
             self.color = new_color
 
     def get_width(self):
+        """Get letter width"""
         return 8 * self.size
