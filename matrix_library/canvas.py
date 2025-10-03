@@ -150,17 +150,50 @@ class Canvas:
             None
         """
 
-        if isinstance(item, s.ColoredBitMap) or isinstance(item, s.Image):
-            for pixel in item.pixels:
-                mask = pixel.contains_points(self.points)
-                color = pixel.color
-
-                reshaped_mask = mask.reshape(self.canvas.shape[:2])
-                self.canvas[reshaped_mask] = color
+        if isinstance(item, (s.ColoredBitMap, s.Image)):
+            self._blit_colored_bitmap(item)
             return
 
         mask = item.contains_points(self.points).reshape(self.canvas.shape[:2])
         self.canvas[mask] = item.color
+
+    def _blit_colored_bitmap(self, bitmap):
+        if not bitmap.pixels:
+            return
+
+        xs = []
+        ys = []
+        colors = []
+
+        canvas_width, canvas_height = self.canvas.shape[1], self.canvas.shape[0]
+
+        for pixel in bitmap.pixels:
+            base_x = int(pixel.position[0])
+            base_y = int(pixel.position[1])
+            scale = max(1, int(pixel.scale))
+
+            for dx in range(scale):
+                x = base_x + dx
+                if x < 0 or x >= canvas_width:
+                    continue
+
+                for dy in range(scale):
+                    y = base_y + dy
+                    if y < 0 or y >= canvas_height:
+                        continue
+
+                    xs.append(x)
+                    ys.append(y)
+                    colors.append(pixel.color)
+
+        if not xs:
+            return
+
+        xs = np.asarray(xs, dtype=np.int64)
+        ys = np.asarray(ys, dtype=np.int64)
+        colors = np.asarray(colors, dtype=np.uint8)
+
+        self.canvas[ys, xs] = colors
 
     def draw(self):
 
