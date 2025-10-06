@@ -165,48 +165,47 @@ class Controller:
                         key_event.keystate == key_event.key_down
                         or key_event.keystate == key_event.key_hold
                     ):
-                    if key_event.keycode in evdev.ecodes.ecodes:
-                        # map key_event.keycode to integer number
-                        logging.debug(
-                            f"_gamepad_events {device_num}: Integer keycode value: {evdev.ecodes.ecodes[key_event.keycode]}"
-                        )
-                        button_code = evdev.ecodes.ecodes[key_event.keycode]
-                        # map the button_code integer number to the internal UP/DOWN/LEFT/RIGHT/etc
-                        try:
-                            button = list(self.button_map.keys())[
-                                list(self.button_map.values()).index(button_code)
-                            ]
+                        if key_event.keycode in evdev.ecodes.ecodes:
+                            # map key_event.keycode to integer number
                             logging.debug(
-                                f"_gamepad_events {device_num}: button {button}"
+                                f"_gamepad_events {device_num}: Integer keycode value: {evdev.ecodes.ecodes[key_event.keycode]}"
                             )
-                        except ValueError as v:
-                            logging.debug(
-                                f"_gamepad_events {device_num}: button_code {button_code} not recognized."
-                            )
-                            next
+                            button_code = evdev.ecodes.ecodes[key_event.keycode]
+                            # map the button_code integer number to the internal UP/DOWN/LEFT/RIGHT/etc
+                            try:
+                                idx = list(self.button_map.values()).index(button_code)
+                                button = list(self.button_map.keys())[idx]
+                                logging.debug(
+                                    f"_gamepad_events {device_num}: button {button}"
+                                )
+                            except ValueError as v:
+                                logging.debug(
+                                    f"_gamepad_events {device_num}: button_code {button_code} not recognized."
+                                )
+                                continue
 
-                        # if on the second gamepad, update the button to the "<blah>2" button
-                        if int(device_num) == 2:
-                            origbutton = copy.deepcopy(button)
-                            button = f"{button}2"
-                            logging.debug(
-                                f"_gamepad_events {device_num}: button {origbutton} remapped to {button}"
-                            )
+                            # if on the second gamepad, update the button to the "<blah>2" button
+                            if int(device_num) == 2:
+                                origbutton = copy.deepcopy(button)
+                                button = f"{button}2"
+                                logging.debug(
+                                    f"_gamepad_events {device_num}: button {origbutton} remapped to {button}"
+                                )
 
-                        # check to see if a mapped function exists for that
-                        if button in self.function_map:
-                            logging.debug(
-                                f"_gamepad_events {device_num}: button {button} calls function {self.function_map[button]['function']}"
-                            )
-                            self.function_map[button]["function"]()
+                            # check to see if a mapped function exists for that
+                            if button in self.function_map:
+                                logging.debug(
+                                    f"_gamepad_events {device_num}: button {button} calls function {self.function_map[button]['function']}"
+                                )
+                                self.function_map[button]["function"]()
+                            else:
+                                logging.debug(
+                                    f"_gamepad_events {device_num}: button {button} is not mapped to a function."
+                                )
                         else:
-                            logging.debug(
-                                f"_gamepad_events {device_num}: button {button} is not mapped to a function."
+                            logging.info(
+                                f"_gamepad_events {device_num}: {key_event.keycode} not recognized."
                             )
-                    else:
-                        logging.info(
-                            f"_gamepad_events {device_num}: {key_event.keycode} not recognized."
-                        )
         except Exception as e:
             logging.warning(f"Controller {device_num} disconnected: {e}")
             self._connected = False
