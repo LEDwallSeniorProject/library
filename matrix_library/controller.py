@@ -32,6 +32,7 @@ import re
 import platform
 import logging
 import threading
+import os
 
 # TODO: change this to make it like the others
 # Detection of Platform for import
@@ -70,6 +71,7 @@ class Controller:
 
         # setup the LEDwall with evdev for controller inputs
         if mode == "board":
+            self._connected = False
             while self.gamepad is None:
                 try:
                     # autodetection of gamepad
@@ -88,6 +90,7 @@ class Controller:
                 except:
                     logging.info("No gamepad found - sleeping 1 second")
                     time.sleep(1)
+            self._connected = True
             self.button_map = {
                 "LB": 37,
                 "RB": 50,
@@ -111,6 +114,10 @@ class Controller:
             self.t = threading.Thread(
                 target=self._loop_thread, args=(self.loop,), daemon=True
             ).start()
+
+            # start a background watcher to reconnect if controllers drop
+            self._watcher_stop = threading.Event()
+            threading.Thread(target=self._reconnect_watcher, daemon=True).start()
 
         # setup workstation mode with pygame and keyboard input
         elif mode == "workstation":
@@ -149,15 +156,15 @@ class Controller:
     # asyncio gamepad_event function -- internal use only
     async def _gamepad_events(self, device):
         device_num = "1" if device is self.gamepad else "2"
-        async for event in device.async_read_loop():
+        try:
+            async for event in device.async_read_loop():
             # logging.debug(f"_gamepad_events {device_num}: {device.path} {evdev.categorize(event)}")
-
-            if event.type == evdev.ecodes.EV_KEY:
-                key_event = evdev.categorize(event)
-                if (
-                    key_event.keystate == key_event.key_down
-                    or key_event.keystate == key_event.key_hold
-                ):
+                if event.type == evdev.ecodes.EV_KEY:
+                    key_event = evdev.categorize(event)
+                    if (
+                        key_event.keystate == key_event.key_down
+                        or key_event.keystate == key_event.key_hold
+                    ):
                     if key_event.keycode in evdev.ecodes.ecodes:
                         # map key_event.keycode to integer number
                         logging.debug(
@@ -200,6 +207,9 @@ class Controller:
                         logging.info(
                             f"_gamepad_events {device_num}: {key_event.keycode} not recognized."
                         )
+        except Exception as e:
+            logging.warning(f"Controller {device_num} disconnected: {e}")
+            self._connected = False
 
     # asyncio loop_thread function -- internal use only
     def _loop_thread(self, loop):
@@ -209,6 +219,30 @@ class Controller:
         except:
             logging.info(f"System exit caught - exiting")
             loop.stop()
+
+    def _reconnect_watcher(self):
+        if mode != "board":
+            return
+        while not getattr(self, "_watcher_stop", threading.Event()).is_set():
+            if not self._connected:
+                try:
+                    devices = [evdev.InputDevice(p) for p in evdev.list_devices()]
+                    found = []
+                    for device in devices:
+                        if re.search("8BitDo Zero 2 gamepad", device.name):
+                            found.append(evdev.InputDevice(device.path))
+                    if found:
+                        # assign to slots
+                        self.gamepad = found[0]
+                        self.gamepad2 = found[1] if len(found) > 1 else None
+                        asyncio.run_coroutine_threadsafe(self._gamepad_events(self.gamepad), self.loop)
+                        if self.gamepad2 is not None:
+                            asyncio.run_coroutine_threadsafe(self._gamepad_events(self.gamepad2), self.loop)
+                        self._connected = True
+                        logging.info("Reconnected gamepad(s)")
+                except Exception as e:
+                    logging.debug(f"Reconnect attempt failed: {e}")
+            time.sleep(1)
 
     def add_function(self, button, function):
         if mode == "board":
@@ -231,12 +265,23 @@ class Controller:
     def stop(self):
         if mode == "workstation":
             self.listener.stop()
+        elif mode == "board":
+            try:
+                self._watcher_stop.set()
+            except Exception:
+                pass
 
     def clear(self):
         if mode == "workstation":
             self.execution_map = {}
         else:
             self.function_map = {}
+
+    def has_controller(self):
+        if mode == "board":
+            return bool(self._connected)
+        # in workstation mode, always treat as available (keyboard)
+        return True
 
 
 class Workstation_listener:
